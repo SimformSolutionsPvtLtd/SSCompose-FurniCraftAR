@@ -22,4 +22,15 @@ object Constants {
      */
     const val DOWNLOAD_PROGRESS_INTERVAL = 500 // MS
     const val LABEL_DOWNLOAD_PROGRESS = "DownloadProgress"
+
+    /**
+     * Model
+     */
+    const val MODEL_EXTENSION = "glb"
+    const val MODEL_INITIAL_SIZE = 0.5F // Meter
+    const val MODEL_BOUNCING_HEIGHT = 0.05F // Meter
+    const val MODEL_BOUNCING_DURATION = 1000 // MS
+    const val MODEL_NO_ROTATION = 0F // Degree
+    const val MODEL_NO_SCALE = 0F
+    const val MODEL_RENDER_LOWEST_PRIORITY = 7
 }
