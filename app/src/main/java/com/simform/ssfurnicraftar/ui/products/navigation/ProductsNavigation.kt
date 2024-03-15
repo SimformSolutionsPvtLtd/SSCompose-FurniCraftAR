@@ -4,7 +4,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.simform.ssfurnicraftar.ui.products.ProductsRoute
 
-const val PRODUCTS_ROUTE = "products_route"
+const val PRODUCTS_ROUTE = "products_route/{productId}"
 
 fun NavGraphBuilder.productsScreen(onProductClick: (String) -> Unit) {
     composable(
