@@ -13,7 +13,8 @@ const val GREETING_ROUTE = "greeting"
 fun AppNavHost(
     modifier: Modifier = Modifier,
     appState: AppState,
-    startDestination: String = GREETING_ROUTE
+    startDestination: String = GREETING_ROUTE,
+    onShowSnackbar: suspend (String, String?) -> Boolean
 ) {
 
     val navController = appState.navController

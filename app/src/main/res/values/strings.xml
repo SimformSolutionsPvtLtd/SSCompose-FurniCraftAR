@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">SSFurniCraftAR</string>
+    <string name="not_connected">Looks like you\'re offline &#9888;&#65039;. Please reconnect!</string>
 </resources>
