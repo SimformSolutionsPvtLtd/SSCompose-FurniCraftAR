@@ -12,7 +12,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
@@ -39,6 +38,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.SubcomposeAsyncImage
 import com.simform.ssfurnicraftar.R
 import com.simform.ssfurnicraftar.data.model.Category
@@ -52,16 +54,16 @@ fun ProductsRoute(
     onProductClick: (String) -> Unit,
     viewModel: ProductsViewModel = hiltViewModel()
 ) {
-    val productsUiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val currentCategory by viewModel.currentCategory.collectAsStateWithLifecycle()
+    val productItems = viewModel.modelsFlow.collectAsLazyPagingItems()
 
     ProductsScreen(
         modifier = modifier,
         categories = viewModel.categories,
-        currentCategory = viewModel.currentCategory,
-        productsUiState = productsUiState,
+        currentCategory = currentCategory,
+        productItems = productItems,
         onCategoryChange = viewModel::changeCategory,
-        onProductClick = onProductClick,
-        onRefresh = viewModel::refreshData
+        onProductClick = onProductClick
     )
 }
 
@@ -71,17 +73,16 @@ private fun ProductsScreen(
     modifier: Modifier = Modifier,
     categories: List<Category>,
     currentCategory: Category,
-    productsUiState: ProductsUiState,
+    productItems: LazyPagingItems<Product>,
     onCategoryChange: (Category) -> Unit,
-    onProductClick: (String) -> Unit,
-    onRefresh: () -> Unit
+    onProductClick: (String) -> Unit
 ) {
 
     val pullToRefreshState = rememberPullToRefreshState()
 
     if (pullToRefreshState.isRefreshing) {
         LaunchedEffect(Unit) {
-            onRefresh()
+            productItems.refresh()
             pullToRefreshState.endRefresh()
         }
     }
@@ -99,12 +100,12 @@ private fun ProductsScreen(
             )
 
             Products(
-                productsUiState = productsUiState,
+                productItems = productItems,
                 onProductClick = onProductClick
             )
         }
 
-        if (productsUiState !is ProductsUiState.Loading) {
+        if (productItems.loadState.refresh !is LoadState.Loading) {
             PullToRefreshContainer(
                 modifier = Modifier.align(Alignment.TopCenter),
                 state = pullToRefreshState
@@ -156,24 +157,35 @@ private fun CategoryCard(
 @Composable
 fun Products(
     modifier: Modifier = Modifier,
-    productsUiState: ProductsUiState,
+    productItems: LazyPagingItems<Product>,
     onProductClick: (String) -> Unit
 ) {
     Box(modifier = modifier.fillMaxSize()) {
-        when (productsUiState) {
-            ProductsUiState.Empty -> {
-                NoData(
-                    modifier = Modifier.align(Alignment.Center)
-                )
+        val refreshState = productItems.loadState.refresh
+        val sourceState = productItems.loadState.source.refresh
+        val mediatorState = productItems.loadState.mediator?.refresh
+
+        when {
+            // If there is no data available to display, show no data view.
+            // Initially item counts might be zero. We must check that source
+            // state or remote mediator is not in loading state.
+            productItems.itemCount == 0
+                    && sourceState !is LoadState.Loading
+                    && mediatorState !is LoadState.Loading -> {
+                NoData(modifier = Modifier.align(Alignment.Center))
             }
 
-            ProductsUiState.Loading -> {
+            // When products are loading show product placeholders.
+            // Loading can be either by refresh state (initial load/pull to refresh) or
+            // by sourceState when changing the category.
+            refreshState is LoadState.Loading
+                    || (sourceState is LoadState.Loading && productItems.itemCount == 0) -> {
                 ProductsLoading()
             }
 
-            is ProductsUiState.Products -> {
+            else -> {
                 ProductsContent(
-                    products = productsUiState.models,
+                    products = productItems,
                     onProductClick = onProductClick
                 )
             }
@@ -186,7 +198,7 @@ private fun ProductsLoading(
     modifier: Modifier = Modifier
 ) {
     ProductsGrid(modifier = modifier) {
-        items(10) {
+        items(LocalDimens.Products.PlaceholdersCount) {
             Box(
                 modifier = modifier
                     .aspectRatio(LocalDimens.Products.CardRatio)
@@ -199,15 +211,17 @@ private fun ProductsLoading(
 @Composable
 private fun ProductsContent(
     modifier: Modifier = Modifier,
-    products: List<Product>,
+    products: LazyPagingItems<Product>,
     onProductClick: (String) -> Unit
 ) {
     ProductsGrid(modifier = modifier) {
-        items(products, key = { it.id }) { model ->
-            ProductCard(
-                model = model,
-                onProductClick = onProductClick
-            )
+        items(products.itemCount) { index ->
+            products[index]?.let {
+                ProductCard(
+                    model = it,
+                    onProductClick = onProductClick
+                )
+            }
         }
     }
 }

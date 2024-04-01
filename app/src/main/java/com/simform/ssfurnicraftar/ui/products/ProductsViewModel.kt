@@ -1,75 +1,43 @@
 package com.simform.ssfurnicraftar.ui.products
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simform.ssfurnicraftar.data.model.Category
-import com.simform.ssfurnicraftar.data.model.Product
 import com.simform.ssfurnicraftar.domain.GetProductsUseCase
 import com.simform.ssfurnicraftar.domain.GetProductCategories
-import com.simform.ssfurnicraftar.utils.result.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
 class ProductsViewModel @Inject constructor(
-    private val getModelsUseCase: GetProductsUseCase,
+    private val getProductsUseCase: GetProductsUseCase,
     getProductCategories: GetProductCategories
 ) : ViewModel() {
 
-    private val _uiState: MutableStateFlow<ProductsUiState> =
-        MutableStateFlow(ProductsUiState.Loading)
-    val uiState: StateFlow<ProductsUiState> = _uiState.asStateFlow()
-
     val categories = getProductCategories()
 
-    var currentCategory by mutableStateOf(Category.TABLE)
-        private set
-
-    init {
-        fetchProducts(currentCategory)
-    }
-
+    private val _currentCategory = MutableStateFlow(Category.TABLE)
+    val currentCategory = _currentCategory.asStateFlow()
 
     /**
-     * Refresh model using current category.
+     * Collect [currentCategory] and update models when category changes.
      */
-    fun refreshData() {
-        fetchProducts(currentCategory)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val modelsFlow = currentCategory.flatMapLatest { categories ->
+        Timber.d("Updating category: $categories")
+        getProductsUseCase(categories)
     }
 
-    /**
-     * Change category and load data for that category.
-     */
     fun changeCategory(category: Category) {
-        if (currentCategory == category) return
-        currentCategory = category
-        fetchProducts(currentCategory)
-    }
-
-    private fun fetchProducts(category: Category) {
         viewModelScope.launch {
-            getModelsUseCase(category).collectLatest { result ->
-                _uiState.update { result.mapToProductsUiState() }
-            }
+            _currentCategory.update { category }
         }
-    }
-
-
-    /**
-     * Map to products results to [ProductsUiState]
-     */
-    private fun Result<List<Product>>.mapToProductsUiState() = when (this) {
-        Result.Loading -> ProductsUiState.Loading
-        is Result.Success -> ProductsUiState.Products(data)
-        is Result.Error -> ProductsUiState.Empty
     }
 }
