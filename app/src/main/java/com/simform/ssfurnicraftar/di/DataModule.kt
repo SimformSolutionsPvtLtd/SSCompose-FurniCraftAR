@@ -1,5 +1,7 @@
 package com.simform.ssfurnicraftar.di
 
+import com.simform.ssfurnicraftar.data.repository.ModelRepository
+import com.simform.ssfurnicraftar.data.repository.ModelRepositoryImpl
 import com.simform.ssfurnicraftar.data.utils.ConnectivityManagerNetworkMonitor
 import com.simform.ssfurnicraftar.data.utils.NetworkMonitor
 import dagger.Binds
@@ -13,4 +15,7 @@ interface DataModule {
 
     @Binds
     fun bindNetworkMonitor(networkMonitor: ConnectivityManagerNetworkMonitor): NetworkMonitor
+
+    @Binds
+    fun bindsModelRepository(modelRepository: ModelRepositoryImpl): ModelRepository
 }
