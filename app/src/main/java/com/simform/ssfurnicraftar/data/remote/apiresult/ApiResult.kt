@@ -1,10 +1,10 @@
 package com.simform.ssfurnicraftar.data.remote.apiresult
 
-import com.simform.ssfurnicraftar.data.remote.ApiService
+import com.simform.ssfurnicraftar.data.remote.NetworkDataSource
 
 /**
  * Interface to wrap API results from a Retrofit API call
- * Use this class as the return type for every function placed in [ApiService]
+ * Use this class as the return type for every function placed in [NetworkDataSource]
  *
  * Usage:
  * ```
