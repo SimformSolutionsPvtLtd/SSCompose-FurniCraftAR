@@ -1,17 +1,24 @@
 package com.simform.ssfurnicraftar.ui.arview
 
+import android.graphics.Bitmap
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.simform.ssfurnicraftar.data.utils.FileHelper
 import com.simform.ssfurnicraftar.ui.arview.navigation.ARViewArgs
 import com.simform.ssfurnicraftar.utils.constant.Constants
+import com.simform.ssfurnicraftar.utils.extension.saveToFile
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.nio.file.Path
+import java.nio.file.Paths
+import java.util.Calendar
 import javax.inject.Inject
+import kotlin.io.path.div
 
 @HiltViewModel
 class ARViewViewModel @Inject constructor(
@@ -36,6 +43,24 @@ class ARViewViewModel @Inject constructor(
      */
     fun changeColor(color: Color?) {
         _arViewUiState.update { it.copy(modelColor = color) }
+    }
+
+    /**
+     * Create shareable uri for given [bitmap]
+     *
+     * @param bitmap The image bitmap to share
+     */
+    fun createShareUri(bitmap: Bitmap) {
+        val fileName = "${Calendar.getInstance().timeInMillis}.${Constants.IMAGE_FILE_EXTENSION}"
+        val filePath = fileHelper.imageShareDir() / Paths.get(fileName)
+
+        viewModelScope.launch {
+            if (bitmap.saveToFile(filePath)) {
+                _arViewUiState.update {
+                    it.copy(shareUri = fileHelper.getUriForFile(filePath.toFile()))
+                }
+            }
+        }
     }
 
     /**
