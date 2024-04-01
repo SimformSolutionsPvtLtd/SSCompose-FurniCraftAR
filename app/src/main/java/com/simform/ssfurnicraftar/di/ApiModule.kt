@@ -2,7 +2,7 @@ package com.simform.ssfurnicraftar.di
 
 import android.content.Context
 import com.simform.ssfurnicraftar.BuildConfig
-import com.simform.ssfurnicraftar.data.remote.ApiService
+import com.simform.ssfurnicraftar.data.remote.api.ApiService
 import com.simform.ssfurnicraftar.data.remote.apiresult.ApiResultCallAdapterFactory
 import com.simform.ssfurnicraftar.utils.Urls
 import dagger.Module
