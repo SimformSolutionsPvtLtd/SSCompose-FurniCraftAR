@@ -10,6 +10,9 @@ import retrofit2.http.Query
  */
 interface ApiService {
 
-    @GET("models/?categories=furniture-home&downloadable=true&archives_flavours=false")
-    suspend fun getModels(@Query("tags") category: String = "table"): ApiResult<NetworkModels>
+    @GET("models?categories=furniture-home&downloadable=true&archives_flavours=false")
+    suspend fun getModels(
+        @Query("tags") category: String = "table",
+        @Query("cursor") cursor: String? = null
+    ): ApiResult<NetworkModels>
 }

@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -57,7 +58,7 @@ class ProductsViewModel @Inject constructor(
     private fun fetchProducts(category: Category) {
         viewModelScope.launch {
             getModelsUseCase(category).collectLatest { result ->
-                _uiState.emit(result.mapToProductsUiState())
+                _uiState.update { result.mapToProductsUiState() }
             }
         }
     }
