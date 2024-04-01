@@ -9,5 +9,6 @@ class NetworkDataSource @Inject constructor(
     private val apiService: ApiService
 ) {
 
-    suspend fun getModels(tag: String): ApiResult<NetworkModels> = apiService.getModels(tag)
+    suspend fun getModels(tag: String, cursor: String): ApiResult<NetworkModels> =
+        apiService.getModels(tag, cursor)
 }
