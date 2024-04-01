@@ -34,4 +34,17 @@ object Constants {
     const val MODEL_NO_SCALE = 0F
     const val MODEL_RENDER_LOWEST_PRIORITY = 7
     const val MODEL_BASE_COLOR_INDEX = 0
+
+    /**
+     * Provider
+     */
+    const val PROVIDER_EXTENSION = "provider"
+
+    /**
+     * Image
+     */
+    const val IMAGE_TYPE = "image/jpeg"
+    const val IMAGE_COMPRESSION_QUALITY = 100 // Percentage
+    const val IMAGE_CAPTURE_HANDLER_NAME = "PixelCopier"
+    const val IMAGE_FILE_EXTENSION = "jpeg"
 }

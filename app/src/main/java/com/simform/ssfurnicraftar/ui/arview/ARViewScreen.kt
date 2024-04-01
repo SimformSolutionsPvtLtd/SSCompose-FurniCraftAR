@@ -1,5 +1,6 @@
 package com.simform.ssfurnicraftar.ui.arview
 
+import android.graphics.Bitmap
 import android.view.MotionEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -21,8 +22,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -51,12 +55,16 @@ import com.simform.ssfurnicraftar.ui.component.ColorPicker
 import com.simform.ssfurnicraftar.ui.component.QuitDialog
 import com.simform.ssfurnicraftar.ui.theme.LocalDimens
 import com.simform.ssfurnicraftar.utils.constant.Constants
+import com.simform.ssfurnicraftar.utils.constant.Urls
+import com.simform.ssfurnicraftar.utils.extension.captureImage
 import com.simform.ssfurnicraftar.utils.extension.clone
 import com.simform.ssfurnicraftar.utils.extension.enableGestures
 import com.simform.ssfurnicraftar.utils.extension.setColor
+import com.simform.ssfurnicraftar.utils.extension.shareImage
 import com.simform.ssfurnicraftar.utils.saver.ColorSaver
 import dev.romainguy.kotlin.math.Float3
 import io.github.sceneview.ar.ARScene
+import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.ar.arcore.createAnchorOrNull
 import io.github.sceneview.ar.arcore.position
 import io.github.sceneview.ar.node.AnchorNode
@@ -84,6 +92,7 @@ fun ARViewRoute(
         modifier = modifier,
         arViewUiState = arViewUiState,
         onColorChange = viewModel::changeColor,
+        onShare = viewModel::createShareUri,
         onNavigateBack = onNavigateBack
     )
 }
@@ -93,20 +102,51 @@ private fun ARViewScreen(
     modifier: Modifier = Modifier,
     arViewUiState: ARViewUiState,
     onColorChange: (Color?) -> Unit,
+    onShare: (Bitmap) -> Unit,
     onNavigateBack: () -> Unit
 ) {
     // Handle back press and show confirmation dialog when quiting AR View
     var showQuitDialog by remember { mutableStateOf(false) }
+    var captureImage by rememberSaveable {
+        mutableStateOf(false)
+    }
+    var capturedImage by remember {
+        mutableStateOf<Bitmap?>(null)
+    }
+
+    val context = LocalContext.current
+    val shareMessage = stringResource(
+        R.string.message_share,
+        Urls.getModelUrl(arViewUiState.productId, arViewUiState.modelColor)
+    )
+
+    LaunchedEffect(key1 = capturedImage) {
+        capturedImage?.let { bitmap ->
+            captureImage = false
+            onShare(bitmap)
+        }
+    }
+
+    LaunchedEffect(key1 = arViewUiState.shareUri) {
+        arViewUiState.shareUri?.let { uri ->
+            context.shareImage(uri, shareMessage)
+        }
+    }
+
     BackHandler {
         showQuitDialog = !showQuitDialog
     }
 
     Box(modifier = modifier) {
         ARView(
-            arViewUiState = arViewUiState
-        )
+            arViewUiState = arViewUiState,
+            enableCapture = captureImage
+        ) { capturedImage = it }
 
-        Options(onColorChange = onColorChange)
+        Options(
+            onShare = { captureImage = true },
+            onColorChange = onColorChange
+        )
 
         if (showQuitDialog) {
             QuitDialog(
@@ -123,7 +163,9 @@ private fun ARViewScreen(
 @Composable
 private fun ARView(
     modifier: Modifier = Modifier,
-    arViewUiState: ARViewUiState
+    arViewUiState: ARViewUiState,
+    enableCapture: Boolean = false,
+    onCapture: ((Bitmap) -> Unit)? = null
 ) {
     // The destroy calls are automatically made when their disposable effect leaves
     // the composition or its key changes.
@@ -144,12 +186,23 @@ private fun ARView(
     }
     var frame by remember { mutableStateOf<Frame?>(null) }
 
+    // Store current view that can be used to capture image
+    var arSceneView by remember { mutableStateOf<ARSceneView?>(null) }
+
     var modelPlaced by remember { mutableStateOf(false) }
     var originalMaterials by remember { mutableStateOf<List<List<MaterialInstance>>?>(null) }
     var colorMaterials by remember { mutableStateOf<List<List<MaterialInstance>>?>(null) }
 
+    LaunchedEffect(key1 = enableCapture) {
+        if (enableCapture) {
+            arSceneView?.run { onCapture?.invoke(captureImage()) }
+        }
+    }
+
     LaunchedEffect(key1 = arViewUiState.modelPath) {
-        model = modelLoader.loadModelInstance(arViewUiState.modelPath)?.let { instance ->
+        val path = arViewUiState.modelPath
+
+        model = modelLoader.loadModelInstance(path)?.let { instance ->
             ModelNode(
                 modelInstance = instance
             ).apply {
@@ -250,13 +303,16 @@ private fun ARView(
         },
         onSessionUpdated = { session, updatedFrame ->
             frame = updatedFrame
-        }
+        },
+        onViewCreated = { arSceneView = this },
+        onViewUpdated = { arSceneView = this }
     )
 }
 
 @Composable
 private fun Options(
     modifier: Modifier = Modifier,
+    onShare: () -> Unit,
     onColorChange: (Color?) -> Unit
 ) {
     Box(
@@ -264,9 +320,30 @@ private fun Options(
             .fillMaxSize()
             .padding(LocalDimens.SpacingMedium)
     ) {
+        ShareOption(
+            modifier = Modifier.align(Alignment.TopEnd),
+            onShare = onShare
+        )
+
         ColorOption(
             modifier = Modifier.align(Alignment.BottomCenter),
             onSelect = onColorChange
+        )
+    }
+}
+
+@Composable
+private fun ShareOption(
+    modifier: Modifier = Modifier,
+    onShare: () -> Unit
+) {
+    IconButton(
+        modifier = modifier,
+        onClick = onShare
+    ) {
+        Icon(
+            imageVector = Icons.Default.Share,
+            contentDescription = stringResource(R.string.share)
         )
     }
 }
@@ -318,9 +395,7 @@ private fun ColorOption(
             }
 
             Button(
-                modifier = Modifier
-                    .padding(horizontal = LocalDimens.SpacingSmall)
-                    .size(LocalDimens.ARView.OptionsIconSize),
+                modifier = Modifier.size(LocalDimens.ARView.OptionsIconSize),
                 onClick = { showPicker = !showPicker },
                 contentPadding = PaddingValues(LocalDimens.NoSpacing)
             ) {

@@ -2,6 +2,7 @@
     <string name="app_name">SSFurniCraftAR</string>
     <string name="not_connected">Looks like you\'re offline &#9888;&#65039;. Please reconnect!</string>
     <string name="confirm">Confirm</string>
+    <string name="share">Share</string>
 
     <!-- Products Screen -->
     <string name="no_data">No Data</string>
@@ -20,4 +21,5 @@
     <string name="color_picker">Color picker</string>
     <string name="reset_color">Reset color</string>
     <string name="title_arview_quit">Are you sure you want to quit AR View?</string>
+    <string name="message_share">View in your space: \n%1$s</string>
 </resources>
