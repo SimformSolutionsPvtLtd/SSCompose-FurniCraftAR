@@ -3,17 +3,16 @@ package com.simform.ssfurnicraftar.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import com.simform.ssfurnicraftar.ui.AppState
-import com.simform.ssfurnicraftar.ui.components.Greeting
-
-const val GREETING_ROUTE = "greeting"
+import com.simform.ssfurnicraftar.ui.products.navigation.PRODUCTS_ROUTE
+import com.simform.ssfurnicraftar.ui.products.navigation.productsScreen
+import timber.log.Timber
 
 @Composable
 fun AppNavHost(
     modifier: Modifier = Modifier,
     appState: AppState,
-    startDestination: String = GREETING_ROUTE,
+    startDestination: String = PRODUCTS_ROUTE,
     onShowSnackbar: suspend (String, String?) -> Boolean
 ) {
 
@@ -24,10 +23,8 @@ fun AppNavHost(
         startDestination = startDestination,
         modifier = modifier,
     ) {
-        composable(
-            route = GREETING_ROUTE,
-        ) {
-            Greeting(name = "World")
+        productsScreen { productId ->
+            Timber.d("Clicked: $productId")
         }
     }
 }
