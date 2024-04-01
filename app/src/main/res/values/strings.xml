@@ -1,4 +1,12 @@
 <resources>
     <string name="app_name">SSFurniCraftAR</string>
-    <string name="not_connected">Looks like you\'re offline &#9888;&#65039;. Please reconnect!</string>
+    <string name="not_connected">Looks like you\'re offline &#9888;&#65039;. Enjoy what\'s saved offline, but reconnect to see everything!</string>
+
+    <!-- Products Screen -->
+    <string name="no_data">No Data</string>
+    <string name="category_table">Table</string>
+    <string name="category_chair">Chair</string>
+    <string name="category_bed">Bed</string>
+    <string name="category_sofa">Sofa</string>
+    <string name="category_desk">Desk</string>
 </resources>
