@@ -42,7 +42,7 @@ import kotlin.math.roundToInt
 @Composable
 fun DownloadRoute(
     modifier: Modifier = Modifier,
-    onDownloadComplete: (String, Path) -> Unit,
+    onDownloadComplete: (String, Path, Int?) -> Unit,
     viewModel: DownloadViewModel = hiltViewModel()
 ) {
     val downloadUiState by viewModel.downloadUiState.collectAsStateWithLifecycle()
@@ -51,7 +51,7 @@ fun DownloadRoute(
         modifier = modifier,
         downloadUiState = downloadUiState,
         onDownloadComplete = { path ->
-            onDownloadComplete(viewModel.productId, path)
+            onDownloadComplete(viewModel.productId, path, viewModel.modelColor)
         }
     )
 }
