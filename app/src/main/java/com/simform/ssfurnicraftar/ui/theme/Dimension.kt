@@ -6,6 +6,7 @@ import androidx.compose.ui.unit.dp
 object LocalDimens {
 
     // Standard spacing
+    val NoSpacing = 0.dp
     val SpacingXXS = 2.dp
     val SpacingXS = 4.dp
     val SpacingSmall = 8.dp
@@ -44,9 +45,19 @@ object LocalDimens {
         const val ProgressWidthPercentage = 0.7F
     }
 
+    object ARView {
+        val OptionsIconSize = 44.dp
+    }
+
     // ShimmerEffect
     object ShimmerEffect {
         const val AnimationDuration = 1000
         const val ColorAlpha = 0.5f
+    }
+
+    // Color Picker
+    object ColorPicker {
+        val SelectionBorderSize = 2.dp
+        val NoSelectionBorderSize = 0.dp
     }
 }

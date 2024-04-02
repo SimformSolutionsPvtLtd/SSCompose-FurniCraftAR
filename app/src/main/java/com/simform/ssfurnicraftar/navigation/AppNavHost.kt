@@ -9,6 +9,7 @@ import com.simform.ssfurnicraftar.ui.arview.navigation.navigateToARView
 import com.simform.ssfurnicraftar.ui.download.navigation.downloadScreen
 import com.simform.ssfurnicraftar.ui.download.navigation.navigateToDownload
 import com.simform.ssfurnicraftar.ui.products.navigation.PRODUCTS_ROUTE
+import com.simform.ssfurnicraftar.ui.products.navigation.navigateToProducts
 import com.simform.ssfurnicraftar.ui.products.navigation.productsScreen
 import timber.log.Timber
 
@@ -36,6 +37,8 @@ fun AppNavHost(
             navController.navigateToARView(productId)
         }
 
-        arViewScreen()
+        arViewScreen {
+            navController.navigateToProducts()
+        }
     }
 }

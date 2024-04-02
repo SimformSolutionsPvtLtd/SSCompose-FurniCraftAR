@@ -1,26 +1,60 @@
 package com.simform.ssfurnicraftar.ui.arview
 
 import android.view.MotionEvent
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.filament.Engine
+import com.google.android.filament.MaterialInstance
 import com.google.ar.core.CameraConfig
 import com.google.ar.core.CameraConfigFilter
 import com.google.ar.core.Config
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingFailureReason
+import com.simform.ssfurnicraftar.R
+import com.simform.ssfurnicraftar.ui.component.ColorPicker
+import com.simform.ssfurnicraftar.ui.component.QuitDialog
+import com.simform.ssfurnicraftar.ui.theme.LocalDimens
 import com.simform.ssfurnicraftar.utils.constant.Constants
+import com.simform.ssfurnicraftar.utils.extension.clone
 import com.simform.ssfurnicraftar.utils.extension.enableGestures
+import com.simform.ssfurnicraftar.utils.extension.setColor
+import com.simform.ssfurnicraftar.utils.saver.ColorSaver
 import dev.romainguy.kotlin.math.Float3
 import io.github.sceneview.ar.ARScene
 import io.github.sceneview.ar.arcore.createAnchorOrNull
@@ -36,26 +70,54 @@ import io.github.sceneview.rememberNodes
 import io.github.sceneview.rememberOnGestureListener
 import io.github.sceneview.rememberView
 import java.util.EnumSet
+import io.github.sceneview.math.Color as SVColor
 
 @Composable
 fun ARViewRoute(
     modifier: Modifier = Modifier,
+    onNavigateBack: () -> Unit,
     viewModel: ARViewViewModel = hiltViewModel()
 ) {
     val arViewUiState by viewModel.arViewUiState.collectAsStateWithLifecycle()
 
     ARViewScreen(
         modifier = modifier,
-        arViewUiState = arViewUiState
+        arViewUiState = arViewUiState,
+        onColorChange = viewModel::changeColor,
+        onNavigateBack = onNavigateBack
     )
 }
 
 @Composable
 private fun ARViewScreen(
     modifier: Modifier = Modifier,
-    arViewUiState: ARViewUiState
+    arViewUiState: ARViewUiState,
+    onColorChange: (Color?) -> Unit,
+    onNavigateBack: () -> Unit
 ) {
-    ARView(modifier = modifier, arViewUiState = arViewUiState)
+    // Handle back press and show confirmation dialog when quiting AR View
+    var showQuitDialog by remember { mutableStateOf(false) }
+    BackHandler {
+        showQuitDialog = !showQuitDialog
+    }
+
+    Box(modifier = modifier) {
+        ARView(
+            arViewUiState = arViewUiState
+        )
+
+        Options(onColorChange = onColorChange)
+
+        if (showQuitDialog) {
+            QuitDialog(
+                message = stringResource(R.string.title_arview_quit),
+                onDismiss = { showQuitDialog = false }
+            ) {
+                showQuitDialog = false
+                onNavigateBack()
+            }
+        }
+    }
 }
 
 @Composable
@@ -76,7 +138,15 @@ private fun ARView(
     // Whether to show detected plane or not
     var planeRenderer by remember { mutableStateOf(true) }
 
+    // Reason for plane detection failure
+    var trackingFailureReason by remember {
+        mutableStateOf<TrackingFailureReason?>(null)
+    }
+    var frame by remember { mutableStateOf<Frame?>(null) }
+
     var modelPlaced by remember { mutableStateOf(false) }
+    var originalMaterials by remember { mutableStateOf<List<List<MaterialInstance>>?>(null) }
+    var colorMaterials by remember { mutableStateOf<List<List<MaterialInstance>>?>(null) }
 
     LaunchedEffect(key1 = arViewUiState.modelPath) {
         model = modelLoader.loadModelInstance(arViewUiState.modelPath)?.let { instance ->
@@ -90,6 +160,8 @@ private fun ARView(
                 rotation = Rotation()
                 // Enable custom gestures on model
                 enableGestures()
+                originalMaterials = materialInstances
+                colorMaterials = materialInstances.clone()
             }
         }
     }
@@ -108,11 +180,17 @@ private fun ARView(
         }
     }
 
-    // Reason for plane detection failure
-    var trackingFailureReason by remember {
-        mutableStateOf<TrackingFailureReason?>(null)
+    LaunchedEffect(key1 = arViewUiState.modelColor, key2 = model) {
+        if (arViewUiState.modelColor == null) {
+            originalMaterials?.let { model?.materialInstances = it }
+            return@LaunchedEffect
+        }
     }
-    var frame by remember { mutableStateOf<Frame?>(null) }
+
+    arViewUiState.modelColor?.let { (r, g, b, a) ->
+        colorMaterials?.let { model?.materialInstances = it }
+        model?.setColor(SVColor(r, g, b, a))
+    }
 
     ARScene(
         modifier = modifier.fillMaxSize(),
@@ -125,12 +203,14 @@ private fun ARView(
                 // If no model is placed then create anchor node and add
                 // model node to that anchor
                 if (childNodes.isEmpty()) {
-                    val anchorNode = frame?.let { frame -> createAnchorNode(engine, frame, event) }
-                        ?: return@rememberOnGestureListener
+                    val anchorNode =
+                        frame?.let { frame -> createAnchorNode(engine, frame, event) }
+                            ?: return@rememberOnGestureListener
                     model?.let {
                         modelPlaced = true
                         anchorNode.addChildNode(it)
                         childNodes.add(anchorNode)
+                        planeRenderer = false
                     }
                 }
             },
@@ -172,6 +252,97 @@ private fun ARView(
             frame = updatedFrame
         }
     )
+}
+
+@Composable
+private fun Options(
+    modifier: Modifier = Modifier,
+    onColorChange: (Color?) -> Unit
+) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(LocalDimens.SpacingMedium)
+    ) {
+        ColorOption(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            onSelect = onColorChange
+        )
+    }
+}
+
+@Composable
+private fun ColorOption(
+    modifier: Modifier = Modifier,
+    onSelect: (Color?) -> Unit
+) {
+    var showPicker by rememberSaveable { mutableStateOf(false) }
+    var selectedColor by rememberSaveable(stateSaver = ColorSaver) { mutableStateOf(null) }
+
+    BoxWithConstraints(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .height(LocalDimens.ARView.OptionsIconSize)
+                .clip(CircleShape)
+        ) {
+            AnimatedVisibility(showPicker) {
+                Row(
+                    modifier = Modifier.widthIn(
+                        max = this@BoxWithConstraints.maxWidth - LocalDimens.ARView.OptionsIconSize - (LocalDimens.SpacingSmall * 2)
+                    ),
+                    horizontalArrangement = Arrangement.spacedBy(LocalDimens.SpacingSmall)
+                ) {
+                    Button(
+                        modifier = Modifier.size(LocalDimens.ARView.OptionsIconSize),
+                        onClick = {
+                            selectedColor = null
+                            onSelect(null)
+                        },
+                        contentPadding = PaddingValues(LocalDimens.NoSpacing)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.RestartAlt,
+                            contentDescription = stringResource(R.string.reset_color)
+                        )
+                    }
+
+                    ColorPicker(
+                        modifier = Modifier,
+                        initialColor = selectedColor,
+                        onSelect = { color ->
+                            selectedColor = color
+                            onSelect(selectedColor)
+                        }
+                    )
+                }
+            }
+
+            Button(
+                modifier = Modifier
+                    .padding(horizontal = LocalDimens.SpacingSmall)
+                    .size(LocalDimens.ARView.OptionsIconSize),
+                onClick = { showPicker = !showPicker },
+                contentPadding = PaddingValues(LocalDimens.NoSpacing)
+            ) {
+                val iconDescription = stringResource(R.string.color_picker)
+                AnimatedContent(targetState = showPicker, label = "ColorPicker") { showPicker ->
+                    if (showPicker) {
+                        Icon(
+                            modifier = Modifier.fillMaxSize(),
+                            imageVector = Icons.Default.Close,
+                            contentDescription = iconDescription,
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(R.drawable.ic_color_picker),
+                            contentDescription = iconDescription,
+                            contentScale = ContentScale.FillBounds
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
 
 /**
