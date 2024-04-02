@@ -33,8 +33,8 @@ fun AppNavHost(
             navController.navigateToDownload(productId)
         }
 
-        downloadScreen { productId, _ ->
-            navController.navigateToARView(productId)
+        downloadScreen { productId, _, color ->
+            navController.navigateToARView(productId, color)
         }
 
         arViewScreen {
