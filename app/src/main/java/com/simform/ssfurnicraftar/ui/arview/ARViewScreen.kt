@@ -61,7 +61,6 @@ import com.simform.ssfurnicraftar.utils.extension.clone
 import com.simform.ssfurnicraftar.utils.extension.enableGestures
 import com.simform.ssfurnicraftar.utils.extension.setColor
 import com.simform.ssfurnicraftar.utils.extension.shareImage
-import com.simform.ssfurnicraftar.utils.saver.ColorSaver
 import dev.romainguy.kotlin.math.Float3
 import io.github.sceneview.ar.ARScene
 import io.github.sceneview.ar.ARSceneView
@@ -145,6 +144,7 @@ private fun ARViewScreen(
 
         Options(
             onShare = { captureImage = true },
+            arViewUiState = arViewUiState,
             onColorChange = onColorChange
         )
 
@@ -312,6 +312,7 @@ private fun ARView(
 @Composable
 private fun Options(
     modifier: Modifier = Modifier,
+    arViewUiState: ARViewUiState,
     onShare: () -> Unit,
     onColorChange: (Color?) -> Unit
 ) {
@@ -327,6 +328,7 @@ private fun Options(
 
         ColorOption(
             modifier = Modifier.align(Alignment.BottomCenter),
+            selectedColor = arViewUiState.modelColor,
             onSelect = onColorChange
         )
     }
@@ -351,10 +353,10 @@ private fun ShareOption(
 @Composable
 private fun ColorOption(
     modifier: Modifier = Modifier,
+    selectedColor: Color?,
     onSelect: (Color?) -> Unit
 ) {
     var showPicker by rememberSaveable { mutableStateOf(false) }
-    var selectedColor by rememberSaveable(stateSaver = ColorSaver) { mutableStateOf(null) }
 
     BoxWithConstraints(modifier = modifier) {
         Row(
@@ -372,7 +374,6 @@ private fun ColorOption(
                     Button(
                         modifier = Modifier.size(LocalDimens.ARView.OptionsIconSize),
                         onClick = {
-                            selectedColor = null
                             onSelect(null)
                         },
                         contentPadding = PaddingValues(LocalDimens.NoSpacing)
@@ -386,10 +387,7 @@ private fun ColorOption(
                     ColorPicker(
                         modifier = Modifier,
                         initialColor = selectedColor,
-                        onSelect = { color ->
-                            selectedColor = color
-                            onSelect(selectedColor)
-                        }
+                        onSelect = onSelect
                     )
                 }
             }

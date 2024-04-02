@@ -31,6 +31,7 @@ class DownloadViewModel @Inject constructor(
     private val args = DownloadArgs(savedStateHandle)
 
     val productId = args.productId
+    val modelColor = args.modelColor
 
     private val _downloadUiState = MutableStateFlow<DownloadUiState>(DownloadUiState.Loading)
     val downloadUiState = _downloadUiState.asStateFlow()
