@@ -15,4 +15,9 @@
     <string name="title_quit_download">Are you sure you want to quit download?</string>
     <string name="downloading" tools:ignore="TypographyEllipsis">[%1$d\%%] Downloading...</string>
     <string name="download_completed">Download completed.</string>
+
+    <!-- ARView Screen -->
+    <string name="color_picker">Color picker</string>
+    <string name="reset_color">Reset color</string>
+    <string name="title_arview_quit">Are you sure you want to quit AR View?</string>
 </resources>

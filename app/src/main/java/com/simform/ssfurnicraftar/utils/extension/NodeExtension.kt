@@ -1,8 +1,26 @@
 package com.simform.ssfurnicraftar.utils.extension
 
 import com.simform.ssfurnicraftar.utils.constant.Constants
+import io.github.sceneview.material.setBaseColorFactor
+import io.github.sceneview.material.setBaseColorIndex
+import io.github.sceneview.math.Color
 import io.github.sceneview.math.Scale
 import io.github.sceneview.node.ModelNode
+
+/**
+ * Set model's color
+ *
+ * If model is divided in sub-mesh then color will be applied
+ * recursively.
+ *
+ * @param color The new color to set on model
+ */
+fun ModelNode.setColor(color: Color) {
+    materialInstances.flatten().forEach { instance ->
+        instance.setBaseColorIndex(Constants.MODEL_BASE_COLOR_INDEX)
+        instance.setBaseColorFactor(color)
+    }
+}
 
 /**
  * Enable gestures for receiver [ModelNode].
