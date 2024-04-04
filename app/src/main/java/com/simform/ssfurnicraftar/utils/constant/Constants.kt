@@ -32,6 +32,7 @@ object Constants {
     const val MODEL_BOUNCING_DURATION = 1000 // MS
     const val MODEL_NO_ROTATION = 0F // Degree
     const val MODEL_NO_SCALE = 0F
+    const val MODEL_NO_HEIGHT = 0F // Meter
     const val MODEL_RENDER_LOWEST_PRIORITY = 7
     const val MODEL_BASE_COLOR_INDEX = 0
 

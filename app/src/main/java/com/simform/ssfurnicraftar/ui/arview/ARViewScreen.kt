@@ -1,11 +1,12 @@
 package com.simform.ssfurnicraftar.ui.arview
 
 import android.graphics.Bitmap
-import android.view.MotionEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -49,6 +50,8 @@ import com.google.ar.core.CameraConfig
 import com.google.ar.core.CameraConfigFilter
 import com.google.ar.core.Config
 import com.google.ar.core.Frame
+import com.google.ar.core.Plane
+import com.google.ar.core.Pose
 import com.google.ar.core.TrackingFailureReason
 import com.simform.ssfurnicraftar.R
 import com.simform.ssfurnicraftar.ui.component.ColorPicker
@@ -61,10 +64,10 @@ import com.simform.ssfurnicraftar.utils.extension.clone
 import com.simform.ssfurnicraftar.utils.extension.enableGestures
 import com.simform.ssfurnicraftar.utils.extension.setColor
 import com.simform.ssfurnicraftar.utils.extension.shareImage
-import dev.romainguy.kotlin.math.Float3
 import io.github.sceneview.ar.ARScene
 import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.ar.arcore.createAnchorOrNull
+import io.github.sceneview.ar.arcore.getUpdatedPlanes
 import io.github.sceneview.ar.arcore.position
 import io.github.sceneview.ar.node.AnchorNode
 import io.github.sceneview.math.Position
@@ -189,7 +192,7 @@ private fun ARView(
     // Store current view that can be used to capture image
     var arSceneView by remember { mutableStateOf<ARSceneView?>(null) }
 
-    var modelPlaced by remember { mutableStateOf(false) }
+    var animateModel by remember { mutableStateOf(false) }
     var originalMaterials by remember { mutableStateOf<List<List<MaterialInstance>>?>(null) }
     var colorMaterials by remember { mutableStateOf<List<List<MaterialInstance>>?>(null) }
 
@@ -219,13 +222,26 @@ private fun ARView(
         }
     }
 
-    LaunchedEffect(key1 = modelPlaced) {
-        if (modelPlaced) {
+    LaunchedEffect(key1 = animateModel) {
+        if (animateModel) {
             model?.apply {
                 animate(
                     initialValue = Constants.MODEL_BOUNCING_HEIGHT,
-                    targetValue = Constants.MODEL_NO_ROTATION,
-                    animationSpec = tween(durationMillis = Constants.MODEL_BOUNCING_DURATION)
+                    targetValue = Constants.MODEL_NO_HEIGHT,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(durationMillis = Constants.MODEL_BOUNCING_DURATION),
+                        repeatMode = RepeatMode.Reverse
+                    )
+                ) { value, _ ->
+                    position = Position(y = value)
+                }
+            }
+        } else {
+            model?.apply {
+                animate(
+                    initialValue = position.y,
+                    targetValue = Constants.MODEL_NO_HEIGHT,
+                    animationSpec = tween()
                 ) { value, _ ->
                     position = Position(y = value)
                 }
@@ -253,19 +269,7 @@ private fun ARView(
         modelLoader = modelLoader,
         onGestureListener = rememberOnGestureListener(
             onSingleTapConfirmed = { event, node ->
-                // If no model is placed then create anchor node and add
-                // model node to that anchor
-                if (childNodes.isEmpty()) {
-                    val anchorNode =
-                        frame?.let { frame -> createAnchorNode(engine, frame, event) }
-                            ?: return@rememberOnGestureListener
-                    model?.let {
-                        modelPlaced = true
-                        anchorNode.addChildNode(it)
-                        childNodes.add(anchorNode)
-                        planeRenderer = false
-                    }
-                }
+                animateModel = false
             },
             onMove = { _, event, node ->
                 if (node == null) return@rememberOnGestureListener
@@ -303,6 +307,30 @@ private fun ARView(
         },
         onSessionUpdated = { session, updatedFrame ->
             frame = updatedFrame
+
+            // If no model is placed then create anchor node and add
+            // model node to that anchor
+            if (childNodes.isEmpty()) {
+                updatedFrame.createCenterAnchorNode(engine)?.let { anchorNode ->
+                    model?.let {
+                        animateModel = true
+                        anchorNode.addChildNode(it)
+                        childNodes.add(anchorNode)
+                        planeRenderer = false
+                    }
+                }
+            } else if (animateModel) {
+                (childNodes.firstOrNull() as? AnchorNode)?.apply {
+                    val (x, y) = view.viewport.run {
+                        with(LocalDimens.ARView) {
+                            width / MODEL_PLACEMENT_WIDTH_PROPORTION to height / MODEL_PLACEMENT_HEIGHT_PROPORTION
+                        }
+                    }
+
+                    val newPosition = updatedFrame.getPose(x, y)?.position ?: return@ARScene
+                    worldPosition = Position(newPosition.x, newPosition.y, newPosition.z)
+                }
+            }
         },
         onViewCreated = { arSceneView = this },
         onViewUpdated = { arSceneView = this }
@@ -366,9 +394,11 @@ private fun ColorOption(
         ) {
             AnimatedVisibility(showPicker) {
                 Row(
-                    modifier = Modifier.widthIn(
-                        max = this@BoxWithConstraints.maxWidth - LocalDimens.ARView.OptionsIconSize - (LocalDimens.SpacingSmall * 2)
-                    ),
+                    modifier = Modifier
+                        .widthIn(
+                            max = this@BoxWithConstraints.maxWidth - LocalDimens.ARView.OptionsIconSize
+                        )
+                        .padding(end = LocalDimens.SpacingSmall),
                     horizontalArrangement = Arrangement.spacedBy(LocalDimens.SpacingSmall)
                 ) {
                     Button(
@@ -393,7 +423,8 @@ private fun ColorOption(
             }
 
             Button(
-                modifier = Modifier.size(LocalDimens.ARView.OptionsIconSize),
+                modifier = Modifier
+                    .size(LocalDimens.ARView.OptionsIconSize),
                 onClick = { showPicker = !showPicker },
                 contentPadding = PaddingValues(LocalDimens.NoSpacing)
             ) {
@@ -419,9 +450,22 @@ private fun ColorOption(
 }
 
 /**
- * Create anchor node at the real world location where the touch event has occurred.
+ * Create anchor node at the center of the screen
  */
-private fun createAnchorNode(engine: Engine, frame: Frame, event: MotionEvent): AnchorNode? =
-    frame.hitTest(event).firstOrNull()?.createAnchorOrNull()?.let { anchor ->
-        AnchorNode(engine, anchor)
-    }
+private fun Frame.createCenterAnchorNode(engine: Engine): AnchorNode? =
+    getUpdatedPlanes().firstOrNull { it.type == Plane.Type.HORIZONTAL_UPWARD_FACING }
+        ?.let { it.createAnchorOrNull(it.centerPose) }
+        ?.let { anchor ->
+            AnchorNode(engine, anchor).apply {
+                isEditable = false
+                isPositionEditable = false
+                updateAnchorPose = false
+            }
+        }
+
+/**
+ * Get real world position from the given [x] & [y] coordinates.
+ */
+private fun Frame.getPose(x: Float, y: Float): Pose? =
+    hitTest(x, y).firstOrNull()?.hitPose
+

@@ -47,6 +47,8 @@ object LocalDimens {
 
     object ARView {
         val OptionsIconSize = 44.dp
+        const val MODEL_PLACEMENT_WIDTH_PROPORTION = 2F
+        const val MODEL_PLACEMENT_HEIGHT_PROPORTION = 2F
     }
 
     // ShimmerEffect
