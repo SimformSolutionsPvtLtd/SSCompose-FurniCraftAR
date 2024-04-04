@@ -3,10 +3,11 @@ package com.simform.ssfurnicraftar.data.local.database.model
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import com.simform.ssfurnicraftar.utils.constant.Constants
 
 @Entity(
-    tableName = "category_model",
-    primaryKeys = ["categoryId", "modelId"],
+    tableName = Constants.TABLE_CATEGORY_PRODUCT,
+    primaryKeys = ["categoryId", "productId"],
     foreignKeys = [
         ForeignKey(
             entity = CategoryEntity::class,
@@ -15,16 +16,16 @@ import androidx.room.ForeignKey
             onDelete = ForeignKey.CASCADE
         ),
         ForeignKey(
-            entity = ModelEntity::class,
+            entity = ProductEntity::class,
             parentColumns = ["id"],
-            childColumns = ["modelId"],
+            childColumns = ["productId"],
             onDelete = ForeignKey.CASCADE
         )
     ]
 )
-data class CategoryModelCrossRef(
+data class CategoryProductCrossRef(
     @ColumnInfo(index = true)
     val categoryId: Long,
     @ColumnInfo(index = true)
-    val modelId: String
+    val productId: String
 )

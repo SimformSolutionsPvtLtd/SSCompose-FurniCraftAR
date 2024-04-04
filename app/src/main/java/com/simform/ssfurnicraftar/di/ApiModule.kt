@@ -4,7 +4,7 @@ import android.content.Context
 import com.simform.ssfurnicraftar.BuildConfig
 import com.simform.ssfurnicraftar.data.remote.api.ApiService
 import com.simform.ssfurnicraftar.data.remote.apiresult.ApiResultCallAdapterFactory
-import com.simform.ssfurnicraftar.utils.Urls
+import com.simform.ssfurnicraftar.utils.constant.Urls
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
