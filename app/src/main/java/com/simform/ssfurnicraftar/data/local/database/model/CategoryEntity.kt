@@ -4,9 +4,10 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.simform.ssfurnicraftar.data.model.Category
+import com.simform.ssfurnicraftar.utils.constant.Constants
 
 @Entity(
-    tableName = "category",
+    tableName = Constants.TABLE_CATEGORY,
     indices = [
         Index(value = ["category"], unique = true)
     ]

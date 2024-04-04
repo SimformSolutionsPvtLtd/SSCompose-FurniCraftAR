@@ -1,4 +1,4 @@
-package com.simform.ssfurnicraftar.utils
+package com.simform.ssfurnicraftar.utils.constant
 
 /**
  * API URLs collection.

@@ -1,7 +1,7 @@
 package com.simform.ssfurnicraftar.domain
 
 import com.simform.ssfurnicraftar.data.model.Category
-import com.simform.ssfurnicraftar.data.model.Model
+import com.simform.ssfurnicraftar.data.model.Product
 import com.simform.ssfurnicraftar.data.repository.ModelRepository
 import com.simform.ssfurnicraftar.utils.extension.onError
 import com.simform.ssfurnicraftar.utils.extension.onSuccess
@@ -10,11 +10,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
-class GetModelsUseCase @Inject constructor(
+class GetProductsUseCase @Inject constructor(
     private val modelRepository: ModelRepository,
 ) {
 
-    operator fun invoke(category: Category): Flow<Result<List<Model>>> = flow {
+    operator fun invoke(category: Category): Flow<Result<List<Product>>> = flow {
         emit(Result.Loading)
         modelRepository.getModels(category)
             .onSuccess {

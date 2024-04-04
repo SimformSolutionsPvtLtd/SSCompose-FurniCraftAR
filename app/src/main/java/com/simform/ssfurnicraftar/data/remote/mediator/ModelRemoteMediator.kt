@@ -6,7 +6,7 @@ import androidx.paging.PagingState
 import androidx.paging.RemoteMediator
 import androidx.room.withTransaction
 import com.simform.ssfurnicraftar.data.local.database.SSFurniCraftARDatabase
-import com.simform.ssfurnicraftar.data.local.database.model.ModelEntity
+import com.simform.ssfurnicraftar.data.local.database.model.ProductEntity
 import com.simform.ssfurnicraftar.data.local.database.model.RemoteKey
 import com.simform.ssfurnicraftar.data.local.database.model.asEntity
 import com.simform.ssfurnicraftar.data.model.Category
@@ -25,7 +25,7 @@ class ModelRemoteMediator @Inject constructor(
     private val category: Category,
     private val networkDataSource: NetworkDataSource,
     private val database: SSFurniCraftARDatabase
-) : RemoteMediator<Int, ModelEntity>() {
+) : RemoteMediator<Int, ProductEntity>() {
 
     /**
      * Initial key used for pagination
@@ -37,13 +37,13 @@ class ModelRemoteMediator @Inject constructor(
      */
     private val refreshType = InitializeAction.LAUNCH_INITIAL_REFRESH
 
-    private val categoryAndModelDao = database.categoryAndModelDao()
+    private val categoryAndModelDao = database.categoryAndProductDao()
     private val remoteKeyDao = database.remoteKeyDao()
 
     override suspend fun initialize(): InitializeAction = refreshType
 
     override suspend fun load(
-        loadType: LoadType, state: PagingState<Int, ModelEntity>
+        loadType: LoadType, state: PagingState<Int, ProductEntity>
     ): MediatorResult {
 
         val currentKey: String = when (loadType) {
@@ -83,15 +83,15 @@ class ModelRemoteMediator @Inject constructor(
         database.withTransaction {
             if (isRefresh) {
                 // If refreshing for particular category delete all models belongs to that category
-                categoryAndModelDao.deleteModelsByCategory(category)
+                categoryAndModelDao.deleteProductsByCategory(category)
             }
 
-            categoryAndModelDao.insertCategoryWithModels(category.asEntity(), models)
+            categoryAndModelDao.insertCategoryWithProducts(category.asEntity(), models)
             categoryAndModelDao.findCategory(category)?.id?.let { categoryId ->
                 // Create remote keys for pagination
                 val keys = models.map {
                     RemoteKey(
-                        modelId = it.id,
+                        productId = it.id,
                         categoryId = categoryId,
                         previous = data.cursors.previous,
                         next = data.cursors.next
@@ -108,14 +108,14 @@ class ModelRemoteMediator @Inject constructor(
      *
      * @return Returns the remote key if found, otherwise null
      */
-    private suspend fun PagingState<Int, ModelEntity>.getRemoteKeyForLastItem(): RemoteKey? =
-        lastItemOrNull()?.id?.let { remoteKeyDao.getRemoteKeyByModelId(it) }
+    private suspend fun PagingState<Int, ProductEntity>.getRemoteKeyForLastItem(): RemoteKey? =
+        lastItemOrNull()?.id?.let { remoteKeyDao.getRemoteKeyByProductId(it) }
 
     /**
      * Get remote key for first item
      *
      * @return Returns the remote key if found, otherwise null
      */
-    private suspend fun PagingState<Int, ModelEntity>.getRemoteKeyForFirstItem(): RemoteKey? =
-        firstItemOrNull()?.id?.let { remoteKeyDao.getRemoteKeyByModelId(it) }
+    private suspend fun PagingState<Int, ProductEntity>.getRemoteKeyForFirstItem(): RemoteKey? =
+        firstItemOrNull()?.id?.let { remoteKeyDao.getRemoteKeyByProductId(it) }
 }

@@ -2,10 +2,11 @@ package com.simform.ssfurnicraftar.data.local.database.model
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import com.simform.ssfurnicraftar.utils.constant.Constants
 
 @Entity(
-    tableName = "remote_key",
-    primaryKeys = ["modelId", "categoryId"],
+    tableName = Constants.TABLE_REMOTE_KEY,
+    primaryKeys = ["productId", "categoryId"],
     foreignKeys = [
         ForeignKey(
             entity = CategoryEntity::class,
@@ -14,15 +15,15 @@ import androidx.room.ForeignKey
             onDelete = ForeignKey.CASCADE
         ),
         ForeignKey(
-            entity = ModelEntity::class,
+            entity = ProductEntity::class,
             parentColumns = ["id"],
-            childColumns = ["modelId"],
+            childColumns = ["productId"],
             onDelete = ForeignKey.CASCADE
         )
     ]
 )
 data class RemoteKey(
-    val modelId: String,
+    val productId: String,
     val categoryId: Long,
     val previous: String?,
     val next: String?
