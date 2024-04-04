@@ -42,7 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.SubcomposeAsyncImage
 import com.simform.ssfurnicraftar.R
 import com.simform.ssfurnicraftar.data.model.Category
-import com.simform.ssfurnicraftar.data.model.Model
+import com.simform.ssfurnicraftar.data.model.Product
 import com.simform.ssfurnicraftar.ui.modifier.shimmerEffect
 import com.simform.ssfurnicraftar.ui.theme.LocalDimens
 
@@ -199,7 +199,7 @@ private fun ProductsLoading(
 @Composable
 private fun ProductsContent(
     modifier: Modifier = Modifier,
-    products: List<Model>,
+    products: List<Product>,
     onProductClick: (String) -> Unit
 ) {
     ProductsGrid(modifier = modifier) {
@@ -231,7 +231,7 @@ private fun ProductsGrid(
 @Composable
 private fun ProductCard(
     modifier: Modifier = Modifier,
-    model: Model,
+    model: Product,
     onProductClick: (String) -> Unit
 ) {
     Card(

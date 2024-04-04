@@ -4,11 +4,12 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.simform.ssfurnicraftar.data.remote.model.NetworkModel
+import com.simform.ssfurnicraftar.utils.constant.Constants
 
 @Entity(
-    tableName = "model"
+    tableName = Constants.TABLE_PRODUCT
 )
-data class ModelEntity(
+data class ProductEntity(
     @PrimaryKey
     val id: String,
     val name: String,
@@ -21,7 +22,7 @@ data class ModelEntity(
     val license: String?
 )
 
-fun NetworkModel.asEntity() = ModelEntity(
+fun NetworkModel.asEntity() = ProductEntity(
     id = uid,
     name = name,
     description = description,

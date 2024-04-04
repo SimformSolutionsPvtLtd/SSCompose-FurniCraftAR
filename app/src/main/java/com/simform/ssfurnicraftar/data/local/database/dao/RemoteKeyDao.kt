@@ -24,21 +24,21 @@ interface RemoteKeyDao {
     suspend fun getRemoteKeys(): List<RemoteKey>
 
     /**
-     * Get [RemoteKey] by model given [modelID]
+     * Get [RemoteKey] by product given [productId]
      *
-     * @param modelID The model id used for finding remote key
+     * @param productId The product id used for finding remote key
      * @return
      */
-    @Query(value = "SELECT * FROM remote_key WHERE modelID = :modelID")
-    suspend fun getRemoteKeyByModelId(modelID: String): RemoteKey
+    @Query(value = "SELECT * FROM remote_key WHERE productId = :productId")
+    suspend fun getRemoteKeyByProductId(productId: String): RemoteKey
 
     /**
-     * Delete [RemoteKey] by model given [modelID]
+     * Delete [RemoteKey] by product given [productId]
      *
-     * @param modelID The model id used for deleting remote key
+     * @param productId The product id used for deleting remote key
      */
-    @Query(value = "DELETE FROM remote_key WHERE modelID = :modelID")
-    suspend fun deleteRemoteKeyByModelId(modelID: String)
+    @Query(value = "DELETE FROM remote_key WHERE productId = :productId")
+    suspend fun deleteRemoteKeyByProductId(productId: String)
 
     /**
      * Delete all remote keys

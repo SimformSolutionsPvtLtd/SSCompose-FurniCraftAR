@@ -3,9 +3,10 @@ package com.simform.ssfurnicraftar.di
 import android.content.Context
 import androidx.room.Room
 import com.simform.ssfurnicraftar.data.local.database.SSFurniCraftARDatabase
-import com.simform.ssfurnicraftar.data.local.database.dao.CategoryAndModelDao
-import com.simform.ssfurnicraftar.data.local.database.dao.ModelDao
+import com.simform.ssfurnicraftar.data.local.database.dao.CategoryAndProductDao
+import com.simform.ssfurnicraftar.data.local.database.dao.ProductDao
 import com.simform.ssfurnicraftar.data.local.database.dao.RemoteKeyDao
+import com.simform.ssfurnicraftar.utils.constant.Constants
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,13 +25,13 @@ object DatabaseModule {
     ): SSFurniCraftARDatabase = Room.databaseBuilder(
         context,
         SSFurniCraftARDatabase::class.java,
-        "ssfurnicraftar-database",
+        Constants.DATABASE,
     ).build()
 
     @Provides
     fun providesModelDao(
         database: SSFurniCraftARDatabase
-    ): ModelDao = database.modelDao()
+    ): ProductDao = database.modelDao()
 
     @Provides
     fun providesRemoteKeyDao(
@@ -38,7 +39,7 @@ object DatabaseModule {
     ): RemoteKeyDao = database.remoteKeyDao()
 
     @Provides
-    fun providesCategoryAndModelDao(
+    fun providesCategoryAndProductDao(
         database: SSFurniCraftARDatabase
-    ): CategoryAndModelDao = database.categoryAndModelDao()
+    ): CategoryAndProductDao = database.categoryAndProductDao()
 }

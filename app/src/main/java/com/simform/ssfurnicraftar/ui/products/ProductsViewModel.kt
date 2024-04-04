@@ -6,8 +6,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simform.ssfurnicraftar.data.model.Category
-import com.simform.ssfurnicraftar.data.model.Model
-import com.simform.ssfurnicraftar.domain.GetModelsUseCase
+import com.simform.ssfurnicraftar.data.model.Product
+import com.simform.ssfurnicraftar.domain.GetProductsUseCase
 import com.simform.ssfurnicraftar.domain.GetProductCategories
 import com.simform.ssfurnicraftar.utils.result.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,7 +21,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ProductsViewModel @Inject constructor(
-    private val getModelsUseCase: GetModelsUseCase,
+    private val getModelsUseCase: GetProductsUseCase,
     getProductCategories: GetProductCategories
 ) : ViewModel() {
 
@@ -67,7 +67,7 @@ class ProductsViewModel @Inject constructor(
     /**
      * Map to products results to [ProductsUiState]
      */
-    private fun Result<List<Model>>.mapToProductsUiState() = when (this) {
+    private fun Result<List<Product>>.mapToProductsUiState() = when (this) {
         Result.Loading -> ProductsUiState.Loading
         is Result.Success -> ProductsUiState.Products(data)
         is Result.Error -> ProductsUiState.Empty
