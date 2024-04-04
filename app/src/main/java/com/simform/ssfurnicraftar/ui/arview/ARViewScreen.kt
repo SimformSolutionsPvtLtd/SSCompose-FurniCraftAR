@@ -27,6 +27,8 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,6 +46,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.google.android.filament.Engine
 import com.google.android.filament.MaterialInstance
 import com.google.ar.core.CameraConfig
@@ -69,6 +76,7 @@ import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.ar.arcore.createAnchorOrNull
 import io.github.sceneview.ar.arcore.getUpdatedPlanes
 import io.github.sceneview.ar.arcore.position
+import io.github.sceneview.ar.getDescription
 import io.github.sceneview.ar.node.AnchorNode
 import io.github.sceneview.math.Position
 import io.github.sceneview.math.Rotation
@@ -195,6 +203,7 @@ private fun ARView(
     var animateModel by remember { mutableStateOf(false) }
     var originalMaterials by remember { mutableStateOf<List<List<MaterialInstance>>?>(null) }
     var colorMaterials by remember { mutableStateOf<List<List<MaterialInstance>>?>(null) }
+    var showCoachingOverlay by remember { mutableStateOf(true) }
 
     LaunchedEffect(key1 = enableCapture) {
         if (enableCapture) {
@@ -261,6 +270,7 @@ private fun ARView(
         model?.setColor(SVColor(r, g, b, a))
     }
 
+    Box(modifier = modifier.fillMaxSize())
     ARScene(
         modifier = modifier.fillMaxSize(),
         childNodes = childNodes,
@@ -303,6 +313,7 @@ private fun ARView(
         },
         planeRenderer = planeRenderer,
         onTrackingFailureChanged = {
+            showCoachingOverlay = it != null
             trackingFailureReason = it
         },
         onSessionUpdated = { session, updatedFrame ->
@@ -317,6 +328,7 @@ private fun ARView(
                         anchorNode.addChildNode(it)
                         childNodes.add(anchorNode)
                         planeRenderer = false
+                        showCoachingOverlay = false
                     }
                 }
             } else if (animateModel) {
@@ -335,6 +347,43 @@ private fun ARView(
         onViewCreated = { arSceneView = this },
         onViewUpdated = { arSceneView = this }
     )
+
+    AnimatedVisibility(visible = showCoachingOverlay) {
+        ARCoachingOverlay(
+            failureReason = trackingFailureReason ?: TrackingFailureReason.NONE
+        )
+    }
+}
+
+@Composable
+private fun ARCoachingOverlay(
+    modifier: Modifier = Modifier,
+    failureReason: TrackingFailureReason
+) {
+    val failureMessage = failureReason.getDescription(LocalContext.current)
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.ar_coaching_overlay))
+    val progress by animateLottieCompositionAsState(
+        composition = composition,
+        iterations = LottieConstants.IterateForever
+    )
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(LocalDimens.SpacingLarge)
+    ) {
+        Text(
+            text = failureMessage,
+            style = MaterialTheme.typography.titleLarge
+        )
+
+        LottieAnimation(
+            modifier = modifier
+                .align(Alignment.Center),
+            composition = composition,
+            progress = { progress }
+        )
+    }
 }
 
 @Composable
@@ -423,8 +472,7 @@ private fun ColorOption(
             }
 
             Button(
-                modifier = Modifier
-                    .size(LocalDimens.ARView.OptionsIconSize),
+                modifier = Modifier.size(LocalDimens.ARView.OptionsIconSize),
                 onClick = { showPicker = !showPicker },
                 contentPadding = PaddingValues(LocalDimens.NoSpacing)
             ) {
@@ -468,4 +516,3 @@ private fun Frame.createCenterAnchorNode(engine: Engine): AnchorNode? =
  */
 private fun Frame.getPose(x: Float, y: Float): Pose? =
     hitTest(x, y).firstOrNull()?.hitPose
-
