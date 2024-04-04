@@ -135,6 +135,9 @@ dependencies {
     // ARSceneView
     implementation(libs.arsceneview)
 
+    // Lottie
+    implementation(libs.lottie)
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

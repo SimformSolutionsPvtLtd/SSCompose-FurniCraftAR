@@ -30,6 +30,7 @@ pagingCompose = "3.3.0-alpha04"
 spotless = "6.25.0"
 detekt = "1.23.4"
 arsceneview = "2.1.0"
+lottie = "6.4.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -72,6 +73,7 @@ paging-compose = { group = "androidx.paging", name = "paging-compose", version.r
 shimmer = { group = "com.facebook.shimmer", name = "shimmer", version.ref = "shimmer" }
 coil = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil"}
 arsceneview = { module = "io.github.sceneview:arsceneview", version.ref = "arsceneview" }
+lottie = { module = "com.airbnb.android:lottie-compose", version.ref = "lottie" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
