@@ -37,8 +37,9 @@ fun AppNavHost(
             navController.navigateToARView(productId, color)
         }
 
-        arViewScreen {
-            navController.navigateToProducts()
-        }
+        arViewScreen(
+            onNavigateBack = { navController.navigateToProducts() },
+            onShowSnackbar = onShowSnackbar
+        )
     }
 }
