@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.infiniteRepeatable
@@ -137,6 +138,8 @@ private fun ARViewScreen(
     )
     val modelPlacedMessage = stringResource(R.string.model_placed_successfully)
 
+    var rotationEnabled by rememberSaveable { mutableStateOf(false) }
+
     LaunchedEffect(key1 = capturedImage) {
         capturedImage?.let { bitmap ->
             captureImage = false
@@ -157,6 +160,8 @@ private fun ARViewScreen(
     Box(modifier = modifier) {
         ARView(
             arViewUiState = arViewUiState,
+            rotationEnabled = rotationEnabled,
+            onStopRotation = { rotationEnabled = false },
             enableCapture = captureImage,
             onCapture = { capturedImage = it },
         ) {
@@ -166,6 +171,8 @@ private fun ARViewScreen(
         }
 
         Options(
+            rotationEnabled = rotationEnabled,
+            onRotationToggle = { rotationEnabled = !rotationEnabled },
             onShare = { captureImage = true },
             arViewUiState = arViewUiState,
             onColorChange = onColorChange
@@ -187,6 +194,8 @@ private fun ARViewScreen(
 private fun ARView(
     modifier: Modifier = Modifier,
     arViewUiState: ARViewUiState,
+    rotationEnabled: Boolean,
+    onStopRotation: () -> Unit,
     enableCapture: Boolean = false,
     onCapture: ((Bitmap) -> Unit)? = null,
     onModelPlace: () -> Unit
@@ -271,101 +280,129 @@ private fun ARView(
         }
     }
 
+    LaunchedEffect(key1 = rotationEnabled) {
+        model?.apply {
+            if (rotationEnabled) {
+                animate(
+                    initialValue = rotation.y,
+                    targetValue = rotation.y + 360,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(durationMillis = 10000)
+                    )
+                ) { value, _ ->
+                    rotation = Rotation(y = value)
+                }
+            } else {
+                animate(
+                    initialValue = rotation.y,
+                    targetValue = 0F,
+                    animationSpec = tween()
+                ) { value, _ ->
+                    position = Rotation(y = value)
+                }
+            }
+        }
+    }
+
     LaunchedEffect(key1 = arViewUiState.modelColor, key2 = model) {
         if (arViewUiState.modelColor == null) {
             originalMaterials?.let { model?.materialInstances = it }
             return@LaunchedEffect
         }
+
+        arViewUiState.modelColor.let { (r, g, b, a) ->
+            colorMaterials?.let { model?.materialInstances = it }
+            model?.setColor(SVColor(r, g, b, a))
+        }
     }
 
-    arViewUiState.modelColor?.let { (r, g, b, a) ->
-        colorMaterials?.let { model?.materialInstances = it }
-        model?.setColor(SVColor(r, g, b, a))
-    }
-
-    Box(modifier = modifier.fillMaxSize())
-    ARScene(
-        modifier = modifier.fillMaxSize(),
-        childNodes = childNodes,
-        engine = engine,
-        view = view,
-        modelLoader = modelLoader,
-        onGestureListener = rememberOnGestureListener(
-            onSingleTapConfirmed = { event, node ->
-                animateModel = false
-                onModelPlace()
-            },
-            onMove = { _, event, node ->
-                if (node == null) return@rememberOnGestureListener
-                // Move gesture to move model node. Instead of changing model position
-                // change anchor node position (parent of model node)
-                frame?.hitTest(event)?.firstOrNull()?.hitPose?.position?.let { position ->
-                    val anchor = (node.parent as? AnchorNode) ?: node
-                    anchor.worldPosition = position
-                }
-            }
-        ),
-        sessionCameraConfig = { session ->
-            // Disable Depth API
-            // Depth API may give better results. But, some devices (tested on Samsung S20+)
-            // creates too much lag. Reason is unknown. Looks like the image acquired
-            // with `frame.acquireCameraImage()` is not realised. so we won't be able to acquire
-            // new frames when the rate limit is exceeded.
-            val filter = CameraConfigFilter(session)
-            filter.setDepthSensorUsage(EnumSet.of(CameraConfig.DepthSensorUsage.DO_NOT_USE))
-            val cameraConfigList = session.getSupportedCameraConfigs(filter)
-            cameraConfigList.first()
-        },
-        sessionConfiguration = { session, config ->
-            // Configurations for ARSession
-            config.depthMode = Config.DepthMode.DISABLED
-            config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
-            config.instantPlacementMode = Config.InstantPlacementMode.LOCAL_Y_UP
-            config.planeFindingMode = Config.PlaneFindingMode.HORIZONTAL
-            config.lightEstimationMode =
-                Config.LightEstimationMode.ENVIRONMENTAL_HDR
-        },
-        planeRenderer = planeRenderer,
-        onTrackingFailureChanged = {
-            showCoachingOverlay = it != null
-            trackingFailureReason = it
-        },
-        onSessionUpdated = { session, updatedFrame ->
-            frame = updatedFrame
-
-            // If no model is placed then create anchor node and add
-            // model node to that anchor
-            if (childNodes.isEmpty()) {
-                updatedFrame.createCenterAnchorNode(engine)?.let { anchorNode ->
-                    model?.let {
-                        animateModel = true
-                        anchorNode.addChildNode(it)
-                        childNodes.add(anchorNode)
-                        planeRenderer = false
-                        showCoachingOverlay = false
+    Box(modifier = modifier.fillMaxSize()) {
+        ARScene(
+            modifier = modifier.fillMaxSize(),
+            childNodes = childNodes,
+            engine = engine,
+            view = view,
+            modelLoader = modelLoader,
+            onGestureListener = rememberOnGestureListener(
+                onSingleTapConfirmed = { event, node ->
+                    if (animateModel) {
+                        onModelPlace()
+                        animateModel = false
+                    }
+                    onStopRotation()
+                },
+                onMove = { _, event, node ->
+                    if (node == null) return@rememberOnGestureListener
+                    // Move gesture to move model node. Instead of changing model position
+                    // change anchor node position (parent of model node)
+                    frame?.hitTest(event)?.firstOrNull()?.hitPose?.position?.let { position ->
+                        val anchor = (node.parent as? AnchorNode) ?: node
+                        anchor.worldPosition = position
                     }
                 }
-            } else if (animateModel) {
-                (childNodes.firstOrNull() as? AnchorNode)?.apply {
-                    val (x, y) = view.viewport.run {
-                        with(LocalDimens.ARView) {
-                            width / MODEL_PLACEMENT_WIDTH_PROPORTION to height / MODEL_PLACEMENT_HEIGHT_PROPORTION
+            ),
+            sessionCameraConfig = { session ->
+                // Disable Depth API
+                // Depth API may give better results. But, some devices (tested on Samsung S20+)
+                // creates too much lag. Reason is unknown. Looks like the image acquired
+                // with `frame.acquireCameraImage()` is not realised. so we won't be able to acquire
+                // new frames when the rate limit is exceeded.
+                val filter = CameraConfigFilter(session)
+                filter.setDepthSensorUsage(EnumSet.of(CameraConfig.DepthSensorUsage.DO_NOT_USE))
+                val cameraConfigList = session.getSupportedCameraConfigs(filter)
+                cameraConfigList.first()
+            },
+            sessionConfiguration = { session, config ->
+                // Configurations for ARSession
+                config.depthMode = Config.DepthMode.DISABLED
+                config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
+                config.instantPlacementMode = Config.InstantPlacementMode.LOCAL_Y_UP
+                config.planeFindingMode = Config.PlaneFindingMode.HORIZONTAL
+                config.lightEstimationMode =
+                    Config.LightEstimationMode.ENVIRONMENTAL_HDR
+            },
+            planeRenderer = planeRenderer,
+            onTrackingFailureChanged = {
+                showCoachingOverlay = it != null
+                trackingFailureReason = it
+            },
+            onSessionUpdated = { session, updatedFrame ->
+                frame = updatedFrame
+
+                // If no model is placed then create anchor node and add
+                // model node to that anchor
+                if (childNodes.isEmpty()) {
+                    updatedFrame.createCenterAnchorNode(engine)?.let { anchorNode ->
+                        model?.let {
+                            animateModel = true
+                            anchorNode.addChildNode(it)
+                            childNodes.add(anchorNode)
+                            planeRenderer = false
+                            showCoachingOverlay = false
                         }
                     }
+                } else if (animateModel) {
+                    (childNodes.firstOrNull() as? AnchorNode)?.apply {
+                        val (x, y) = view.viewport.run {
+                            with(LocalDimens.ARView) {
+                                width / MODEL_PLACEMENT_WIDTH_PROPORTION to height / MODEL_PLACEMENT_HEIGHT_PROPORTION
+                            }
+                        }
 
-                    val newPosition = updatedFrame.getPose(x, y)?.position ?: return@ARScene
-                    worldPosition = Position(newPosition.x, newPosition.y, newPosition.z)
+                        val newPosition = updatedFrame.getPose(x, y)?.position ?: return@ARScene
+                        worldPosition = Position(newPosition.x, newPosition.y, newPosition.z)
+                    }
                 }
-            }
-        },
-        onViewCreated = { arSceneView = this },
-        onViewUpdated = { arSceneView = this }
-    )
-
-    AnimatedVisibility(visible = showCoachingOverlay) {
-        ARCoachingOverlay(
-            failureReason = trackingFailureReason ?: TrackingFailureReason.NONE
+            },
+            onViewCreated = { arSceneView = this },
+            onViewUpdated = { arSceneView = this }
         )
+
+        AnimatedVisibility(visible = showCoachingOverlay) {
+            ARCoachingOverlay(
+                failureReason = trackingFailureReason ?: TrackingFailureReason.NONE
+            )
+        }
     }
 }
 
@@ -404,6 +441,8 @@ private fun ARCoachingOverlay(
 private fun Options(
     modifier: Modifier = Modifier,
     arViewUiState: ARViewUiState,
+    rotationEnabled: Boolean,
+    onRotationToggle: () -> Unit,
     onShare: () -> Unit,
     onColorChange: (Color?) -> Unit
 ) {
@@ -412,6 +451,11 @@ private fun Options(
             .fillMaxSize()
             .padding(LocalDimens.SpacingMedium)
     ) {
+        RotationOption(
+            rotationEnabled = rotationEnabled,
+            onClick = onRotationToggle
+        )
+
         ShareOption(
             modifier = Modifier.align(Alignment.TopEnd),
             onShare = onShare
@@ -421,6 +465,29 @@ private fun Options(
             modifier = Modifier.align(Alignment.BottomCenter),
             selectedColor = arViewUiState.modelColor,
             onSelect = onColorChange
+        )
+    }
+}
+
+@Composable
+fun RotationOption(
+    modifier: Modifier = Modifier,
+    rotationEnabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val contentColor by animateColorAsState(
+        targetValue = if (rotationEnabled) Color.Blue else Color.DarkGray,
+        label = "RotationIconColor"
+    )
+
+    IconButton(
+        modifier = modifier,
+        onClick = onClick
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_rotate_360),
+            contentDescription = stringResource(R.string.cd_rotate_360),
+            tint = contentColor
         )
     }
 }
