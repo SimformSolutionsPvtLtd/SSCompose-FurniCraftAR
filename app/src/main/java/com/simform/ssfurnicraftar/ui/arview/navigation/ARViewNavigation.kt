@@ -19,7 +19,10 @@ fun NavController.navigateToARView(productId: String, modelColor: Int? = null) {
     navigate(route)
 }
 
-fun NavGraphBuilder.arViewScreen(onNavigateBack: () -> Unit) {
+fun NavGraphBuilder.arViewScreen(
+    onNavigateBack: () -> Unit,
+    onShowSnackbar: suspend (String, String?) -> Boolean
+) {
     composable(
         route = ARVIEW_ROUTE,
         arguments = listOf(
@@ -31,7 +34,7 @@ fun NavGraphBuilder.arViewScreen(onNavigateBack: () -> Unit) {
             }
         )
     ) {
-        ARViewRoute(onNavigateBack = onNavigateBack)
+        ARViewRoute(onNavigateBack = onNavigateBack, onShowSnackbar = onShowSnackbar)
     }
 }
 
