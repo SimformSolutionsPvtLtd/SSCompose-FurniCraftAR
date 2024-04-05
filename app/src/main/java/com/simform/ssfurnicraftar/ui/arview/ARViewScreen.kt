@@ -34,6 +34,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -87,6 +88,7 @@ import io.github.sceneview.rememberModelLoader
 import io.github.sceneview.rememberNodes
 import io.github.sceneview.rememberOnGestureListener
 import io.github.sceneview.rememberView
+import kotlinx.coroutines.launch
 import java.util.EnumSet
 import io.github.sceneview.math.Color as SVColor
 
@@ -94,6 +96,7 @@ import io.github.sceneview.math.Color as SVColor
 fun ARViewRoute(
     modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit,
+    onShowSnackbar: suspend (String, String?) -> Boolean,
     viewModel: ARViewViewModel = hiltViewModel()
 ) {
     val arViewUiState by viewModel.arViewUiState.collectAsStateWithLifecycle()
@@ -103,7 +106,8 @@ fun ARViewRoute(
         arViewUiState = arViewUiState,
         onColorChange = viewModel::changeColor,
         onShare = viewModel::createShareUri,
-        onNavigateBack = onNavigateBack
+        onNavigateBack = onNavigateBack,
+        onShowSnackbar = onShowSnackbar
     )
 }
 
@@ -113,7 +117,8 @@ private fun ARViewScreen(
     arViewUiState: ARViewUiState,
     onColorChange: (Color?) -> Unit,
     onShare: (Bitmap) -> Unit,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onShowSnackbar: suspend (String, String?) -> Boolean
 ) {
     // Handle back press and show confirmation dialog when quiting AR View
     var showQuitDialog by remember { mutableStateOf(false) }
@@ -124,11 +129,13 @@ private fun ARViewScreen(
         mutableStateOf<Bitmap?>(null)
     }
 
+    val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val shareMessage = stringResource(
         R.string.message_share,
         Urls.getModelUrl(arViewUiState.productId, arViewUiState.modelColor)
     )
+    val modelPlacedMessage = stringResource(R.string.model_placed_successfully)
 
     LaunchedEffect(key1 = capturedImage) {
         capturedImage?.let { bitmap ->
@@ -150,8 +157,13 @@ private fun ARViewScreen(
     Box(modifier = modifier) {
         ARView(
             arViewUiState = arViewUiState,
-            enableCapture = captureImage
-        ) { capturedImage = it }
+            enableCapture = captureImage,
+            onCapture = { capturedImage = it },
+        ) {
+            coroutineScope.launch {
+                onShowSnackbar(modelPlacedMessage, null)
+            }
+        }
 
         Options(
             onShare = { captureImage = true },
@@ -176,7 +188,8 @@ private fun ARView(
     modifier: Modifier = Modifier,
     arViewUiState: ARViewUiState,
     enableCapture: Boolean = false,
-    onCapture: ((Bitmap) -> Unit)? = null
+    onCapture: ((Bitmap) -> Unit)? = null,
+    onModelPlace: () -> Unit
 ) {
     // The destroy calls are automatically made when their disposable effect leaves
     // the composition or its key changes.
@@ -280,6 +293,7 @@ private fun ARView(
         onGestureListener = rememberOnGestureListener(
             onSingleTapConfirmed = { event, node ->
                 animateModel = false
+                onModelPlace()
             },
             onMove = { _, event, node ->
                 if (node == null) return@rememberOnGestureListener
