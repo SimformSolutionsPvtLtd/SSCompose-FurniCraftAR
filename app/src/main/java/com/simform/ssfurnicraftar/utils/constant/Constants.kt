@@ -48,4 +48,7 @@ object Constants {
     const val IMAGE_COMPRESSION_QUALITY = 100 // Percentage
     const val IMAGE_CAPTURE_HANDLER_NAME = "PixelCopier"
     const val IMAGE_FILE_EXTENSION = "jpeg"
+
+    // Lottie
+    const val ANIM_COMPLETE_VALUE = 1F
 }

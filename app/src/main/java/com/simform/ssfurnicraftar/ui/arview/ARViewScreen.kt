@@ -15,11 +15,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -33,6 +35,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -226,6 +230,7 @@ private fun ARView(
     var originalMaterials by remember { mutableStateOf<List<List<MaterialInstance>>?>(null) }
     var colorMaterials by remember { mutableStateOf<List<List<MaterialInstance>>?>(null) }
     var showCoachingOverlay by remember { mutableStateOf(true) }
+    var showGestureOverlay by remember { mutableStateOf(false) }
 
     LaunchedEffect(key1 = enableCapture) {
         if (enableCapture) {
@@ -328,6 +333,7 @@ private fun ARView(
                     if (animateModel) {
                         onModelPlace()
                         animateModel = false
+                        showGestureOverlay = true
                     }
                     onStopRotation()
                 },
@@ -403,6 +409,12 @@ private fun ARView(
                 failureReason = trackingFailureReason ?: TrackingFailureReason.NONE
             )
         }
+
+        AnimatedVisibility(showGestureOverlay) {
+            ARGestureOverlay {
+                showGestureOverlay = false
+            }
+        }
     }
 }
 
@@ -429,12 +441,81 @@ private fun ARCoachingOverlay(
         )
 
         LottieAnimation(
-            modifier = modifier
-                .align(Alignment.Center),
             composition = composition,
             progress = { progress }
         )
     }
+}
+
+@Composable
+private fun ARGestureOverlay(
+    modifier: Modifier = Modifier,
+    iterations: Int = 1,
+    onComplete: () -> Unit
+) {
+    // Create lottie composition specs for all gestures
+    val specs = listOf(
+        R.raw.anim_move_gesture,
+        R.raw.anim_rotate_gesture,
+        R.raw.anim_zoom_gesture
+    ).map(LottieCompositionSpec::RawRes)
+
+    // Display messages for gesture
+    val messages = listOf(
+        R.string.message_move_gesture,
+        R.string.message_rotate_gesture,
+        R.string.message_zoom_gesture
+    ).map { stringResource(it) }
+
+    // Number of times the gestures are played
+    var playedCount by rememberSaveable { mutableIntStateOf(0) }
+
+    // Current index of gesture
+    val currentGestureIndex by remember(playedCount) {
+        // If each gesture is already played for [iterations] times, call onComplete
+        if (playedCount >= iterations * specs.size) {
+            onComplete()
+        }
+        mutableIntStateOf(playedCount % specs.size)
+    }
+
+    Box(
+        modifier = modifier
+            .wrapContentHeight()
+            .padding(LocalDimens.SpacingLarge)
+    ) {
+        key(currentGestureIndex) {
+            Text(
+                text = messages[currentGestureIndex],
+                style = MaterialTheme.typography.titleLarge
+            )
+
+            LottieView(compositionSpec = specs[currentGestureIndex]) {
+                playedCount++
+            }
+        }
+    }
+}
+
+@Composable
+private fun LottieView(
+    modifier: Modifier = Modifier,
+    compositionSpec: LottieCompositionSpec,
+    onEnd: () -> Unit
+) {
+    val composition by rememberLottieComposition(compositionSpec)
+    val progress by animateLottieCompositionAsState(composition)
+    LottieAnimation(
+        modifier = modifier.aspectRatio(LocalDimens.ARView.GestureAnimRatio),
+        composition = composition,
+        contentScale = ContentScale.FillWidth,
+        progress = {
+            if (progress == Constants.ANIM_COMPLETE_VALUE) {
+                onEnd()
+            }
+            progress
+        }
+    )
 }
 
 @Composable
