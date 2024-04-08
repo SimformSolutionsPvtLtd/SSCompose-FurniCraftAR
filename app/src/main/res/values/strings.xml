@@ -24,4 +24,7 @@
     <string name="message_share">View in your space: \n%1$s</string>
     <string name="model_placed_successfully">Model placed successfully.</string>
     <string name="cd_rotate_360">Rotate 360°</string>
+    <string name="message_move_gesture">Move model around the detected surface</string>
+    <string name="message_rotate_gesture">Rotate the model by using two fingers</string>
+    <string name="message_zoom_gesture">Zoom in or out on the model by using a pinch gesture</string>
 </resources>
