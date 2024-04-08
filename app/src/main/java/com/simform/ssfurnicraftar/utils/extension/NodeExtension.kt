@@ -1,11 +1,19 @@
 package com.simform.ssfurnicraftar.utils.extension
 
 import com.simform.ssfurnicraftar.utils.constant.Constants
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.tween
 import io.github.sceneview.material.setBaseColorFactor
 import io.github.sceneview.material.setBaseColorIndex
 import io.github.sceneview.math.Color
+import io.github.sceneview.math.Position
+import io.github.sceneview.math.Rotation
 import io.github.sceneview.math.Scale
 import io.github.sceneview.node.ModelNode
+import io.github.sceneview.node.Node
 
 /**
  * Set model's color
@@ -49,4 +57,57 @@ fun ModelNode.enableGestures() {
     isScaleEditable = true
     isRotationEditable = true
     editableScaleRange = Float.MIN_VALUE..Float.MAX_VALUE
+}
+
+/**
+ * Start bouncing effect on receiver [Node].
+ *
+ * @param targetValue The value in meter how much node will be bouncing.
+ */
+suspend fun Node.startBouncingEffect(
+    targetValue: Float = Constants.MODEL_BOUNCING_HEIGHT
+) {
+    animate(
+        initialValue = Constants.MODEL_NO_HEIGHT,
+        targetValue = targetValue,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = Constants.MODEL_BOUNCING_DURATION),
+            repeatMode = RepeatMode.Reverse
+        )
+    ) { value, _ ->
+        position = Position(y = value)
+    }
+}
+
+/**
+ * End bouncing effect on receiver [Node].
+ */
+suspend fun Node.endBouncingEffect() {
+    animate(
+        initialValue = position.y,
+        targetValue = Constants.MODEL_NO_HEIGHT,
+        animationSpec = tween()
+    ) { value, _ ->
+        position = Position(y = value)
+    }
+}
+
+/**
+ * Start rotation effect on [Node].
+ *
+ * @param duration The time indicating speed of rotation. i.e. duration in which
+ * single rotation will be completed.
+ */
+suspend fun Node.startModelRotation(
+    duration: Int = Constants.MODEL_ROTATION_DURATION
+) {
+    animate(
+        initialValue = rotation.y,
+        targetValue = rotation.y + Constants.MODEL_360_ROTATION,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = duration, easing = LinearEasing)
+        )
+    ) { value, _ ->
+        rotation = Rotation(y = value)
+    }
 }
