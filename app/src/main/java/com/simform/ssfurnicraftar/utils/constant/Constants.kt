@@ -10,4 +10,10 @@ object Constants {
     const val TABLE_CATEGORY = "category"
     const val TABLE_CATEGORY_PRODUCT = "category_product"
     const val TABLE_REMOTE_KEY = "remote_key"
+
+    /**
+     * Authenticator
+     */
+    const val HEADER_AUTHORIZATION = "Authorization"
+    const val TOKEN_KEY = "Token"
 }
