@@ -1,8 +1,8 @@
 package com.simform.ssfurnicraftar.di
 
 import dagger.Module
-import dagger.hilt.components.SingletonComponent
 import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 
 /**
  * Defines all the classes that need to be provided in the scope of the app.
