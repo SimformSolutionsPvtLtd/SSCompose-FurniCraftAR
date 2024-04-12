@@ -1,6 +1,7 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">SSFurniCraftAR</string>
-    <string name="not_connected">Looks like you\'re offline &#9888;&#65039;. Enjoy what\'s saved offline, but reconnect to see everything!</string>
+    <string name="not_connected">Looks like you\'re offline &#9888;&#65039;. Please reconnect!</string>
+    <string name="confirm">Confirm</string>
 
     <!-- Products Screen -->
     <string name="no_data">No Data</string>
@@ -9,4 +10,9 @@
     <string name="category_bed">Bed</string>
     <string name="category_sofa">Sofa</string>
     <string name="category_desk">Desk</string>
+
+    <!-- Download Screen -->
+    <string name="title_quit_download">Are you sure you want to quit download?</string>
+    <string name="downloading" tools:ignore="TypographyEllipsis">[%1$d\%%] Downloading...</string>
+    <string name="download_completed">Download completed.</string>
 </resources>

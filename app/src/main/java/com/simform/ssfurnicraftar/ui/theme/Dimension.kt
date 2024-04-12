@@ -39,6 +39,11 @@ object LocalDimens {
         val CardSize = 140.dp
     }
 
+    // Download Screen
+    object Download {
+        const val ProgressWidthPercentage = 0.7F
+    }
+
     // ShimmerEffect
     object ShimmerEffect {
         const val AnimationDuration = 1000
