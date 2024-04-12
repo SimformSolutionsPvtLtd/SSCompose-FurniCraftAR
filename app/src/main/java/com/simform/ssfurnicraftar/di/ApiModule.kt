@@ -5,11 +5,13 @@ import com.simform.ssfurnicraftar.BuildConfig
 import com.simform.ssfurnicraftar.data.remote.api.ApiService
 import com.simform.ssfurnicraftar.data.remote.apiresult.ApiResultCallAdapterFactory
 import com.simform.ssfurnicraftar.utils.constant.Urls
+import com.simform.ssfurnicraftar.data.remote.interceptor.ApiAuthenticator
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import okhttp3.Authenticator
 import okhttp3.Cache
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -20,8 +22,10 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Named
 import javax.inject.Singleton
 
-private const val HTTP_LOGGING_INTERCEPTOR: String = "HTTP_LOGGING_INTERCEPTOR"
+private const val HTTP_LOGGING_INTERCEPTOR = "HTTP_LOGGING_INTERCEPTOR"
+private const val HTTP_DOWNLOAD_LOGGING_INTERCEPTOR = "HTTP_DOWNLOAD_LOGGING_INTERCEPTOR"
 private const val OKHTTP_CLIENT = "OKHTTP_CLIENT"
+const val OKHTTP_DOWNLOAD_CLIENT = "OKHTTP_DOWNLOAD_CLIENT"
 private const val CACHE_SIZE: Long = 10 * 1024 * 1024 // 10 MB
 private const val NETWORK_CALL_TIMEOUT: Long = 1 // Minute
 
@@ -42,18 +46,50 @@ object ApiModule {
             HttpLoggingInterceptor.Level.NONE
     }
 
+    @Singleton
+    @Provides
+    @Named(HTTP_DOWNLOAD_LOGGING_INTERCEPTOR)
+    fun providesHttpDownloadLoggingInterceptor(): HttpLoggingInterceptor = HttpLoggingInterceptor().apply {
+        level = if (BuildConfig.DEBUG)
+            // Get only Headers for debugging. Logging Body will download whole response (file body)
+            // at once and progress won't work.
+            HttpLoggingInterceptor.Level.HEADERS
+        else
+            HttpLoggingInterceptor.Level.NONE
+    }
+
+    @Singleton
+    @Provides
+    fun providesApiAuthenticator(): Authenticator = ApiAuthenticator()
+
+    @Singleton
     @Provides
     @Named(OKHTTP_CLIENT)
     fun providesOkHttpClient(
         @ApplicationContext context: Context,
-        @Named(HTTP_LOGGING_INTERCEPTOR) httpLoggingInterceptor: HttpLoggingInterceptor
+        @Named(HTTP_LOGGING_INTERCEPTOR) httpLoggingInterceptor: HttpLoggingInterceptor,
+        authenticator: Authenticator
     ): OkHttpClient = OkHttpClient.Builder()
         .cache(Cache(context.cacheDir, CACHE_SIZE))
+        .addInterceptor(httpLoggingInterceptor)
+        .authenticator(authenticator)
+        .readTimeout(NETWORK_CALL_TIMEOUT, TimeUnit.MINUTES)
+        .writeTimeout(NETWORK_CALL_TIMEOUT, TimeUnit.MINUTES)
+        .build()
+
+    @Singleton
+    @Provides
+    @Named(OKHTTP_DOWNLOAD_CLIENT)
+    fun providesOkHttpDownloadClient(
+        @ApplicationContext context: Context,
+        @Named(HTTP_DOWNLOAD_LOGGING_INTERCEPTOR) httpLoggingInterceptor: HttpLoggingInterceptor
+    ): OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(httpLoggingInterceptor)
         .readTimeout(NETWORK_CALL_TIMEOUT, TimeUnit.MINUTES)
         .writeTimeout(NETWORK_CALL_TIMEOUT, TimeUnit.MINUTES)
         .build()
 
+    @Singleton
     @Provides
     fun providesRetrofit(
         @Named(OKHTTP_CLIENT) okHttpClient: OkHttpClient,
@@ -68,6 +104,7 @@ object ApiModule {
         .addCallAdapterFactory(apiResultCallAdapterFactory)
         .build()
 
+    @Singleton
     @Provides
     fun providesApiService(
         retrofit: Retrofit

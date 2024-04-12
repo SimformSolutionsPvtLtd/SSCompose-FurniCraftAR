@@ -10,16 +10,26 @@ import com.simform.ssfurnicraftar.data.local.database.SSFurniCraftARDatabase
 import com.simform.ssfurnicraftar.data.local.database.dao.CategoryAndProductDao
 import com.simform.ssfurnicraftar.data.local.database.model.ProductEntity
 import com.simform.ssfurnicraftar.data.model.Category
+import com.simform.ssfurnicraftar.data.model.DownloadInfo
 import com.simform.ssfurnicraftar.data.model.Product
 import com.simform.ssfurnicraftar.data.model.asExternalModel
 import com.simform.ssfurnicraftar.data.remote.NetworkDataSource
+import com.simform.ssfurnicraftar.data.remote.apiresult.ApiError
+import com.simform.ssfurnicraftar.data.remote.apiresult.ApiException
+import com.simform.ssfurnicraftar.data.remote.apiresult.ApiSuccess
 import com.simform.ssfurnicraftar.data.remote.mediator.ModelRemoteMediator
+import com.simform.ssfurnicraftar.data.remote.model.DownloadStatus
+import com.simform.ssfurnicraftar.utils.result.Result
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
+import java.nio.file.Path
 import javax.inject.Inject
 
 class ModelRepositoryImpl @Inject constructor(
-    private val categoryAndModelDao: CategoryAndProductDao,
+    private val categoryAndProductDao: CategoryAndProductDao,
     private val database: SSFurniCraftARDatabase,
     private val networkDataSource: NetworkDataSource,
     private val localDataSource: LocalDataSource
@@ -33,9 +43,30 @@ class ModelRepositoryImpl @Inject constructor(
             ),
             remoteMediator = ModelRemoteMediator(category, networkDataSource, database),
             pagingSourceFactory = {
-                categoryAndModelDao.getProductsByCategory(category)
+                categoryAndProductDao.getProductsByCategory(category)
             }
         ).flow.map { it.map(ProductEntity::asExternalModel) }
 
     override fun getCategories(): List<Category> = localDataSource.getCategories()
+
+    override suspend fun getDownloadInfo(modelId: String): Flow<Result<DownloadInfo>> = flow {
+        emit(Result.Loading)
+
+        val result = withContext(Dispatchers.IO) {
+            networkDataSource.getDownloadInfo(modelId)
+        }
+
+        when (result) {
+            is ApiSuccess -> {
+                val downloadInfo = result.data.glb.asExternalModel()
+                emit(Result.Success(downloadInfo))
+            }
+
+            is ApiError -> emit(Result.Error(Exception(result.message)))
+            is ApiException -> emit(Result.Error(Exception(result.exception)))
+        }
+    }
+
+    override suspend fun download(path: Path, url: String): Flow<DownloadStatus> =
+        networkDataSource.downloadModel(path, url)
 }

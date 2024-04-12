@@ -1,9 +1,10 @@
 object BuildConfigFields {
-    // AppCenter
-    val APPCENTER_SECRET = Field(
+
+    // SketchFab
+    val SKETCHFAB_API_KEY = Field(
         Type.STRING,
-        "APPCENTER_SECRET",
-        "\"APPCENTER_KEY\""
+        "SKETCHFAB_API_KEY",
+        "SKETCHFAB_API_KEY"
     )
 
     private object Type {

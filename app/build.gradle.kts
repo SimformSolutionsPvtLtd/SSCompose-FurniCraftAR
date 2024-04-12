@@ -1,8 +1,8 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
-    alias (libs.plugins.kotlin.ksp)
-    alias (libs.plugins.hilt.plugin)
+    alias(libs.plugins.kotlin.ksp)
+    alias(libs.plugins.hilt.plugin)
 }
 
 android {
@@ -29,6 +29,14 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+
+        // SketchFab API key
+        with(BuildConfigFields.SKETCHFAB_API_KEY) {
+            val sketchFabApiKey = getProperty(value, "apikeys.properties")
+            forEach { buildType ->
+                buildType.buildConfigField(type, title, sketchFabApiKey)
+            }
         }
     }
 
