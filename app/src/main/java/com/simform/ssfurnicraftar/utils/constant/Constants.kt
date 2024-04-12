@@ -16,4 +16,10 @@ object Constants {
      */
     const val HEADER_AUTHORIZATION = "Authorization"
     const val TOKEN_KEY = "Token"
+
+    /**
+     * Download
+     */
+    const val DOWNLOAD_PROGRESS_INTERVAL = 500 // MS
+    const val LABEL_DOWNLOAD_PROGRESS = "DownloadProgress"
 }
