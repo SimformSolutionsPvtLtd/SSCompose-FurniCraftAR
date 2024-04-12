@@ -1,6 +1,6 @@
 [versions]
 compile-sdk-version = "34"
-min-sdk-version = "24"
+min-sdk-version = "26"
 version-code = "1"
 version-name = "1.0"
 agp = "8.3.1"
