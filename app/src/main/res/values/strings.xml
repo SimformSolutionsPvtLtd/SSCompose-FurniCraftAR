@@ -20,6 +20,8 @@
     <!-- ARView Screen -->
     <string name="color_picker">Color picker</string>
     <string name="reset_color">Reset color</string>
+    <string name="dynamic_color">Dynamic color</string>
+    <string name="dynamic_color_enabled">Dynamic color enabled.</string>
     <string name="title_arview_quit">Are you sure you want to quit AR View?</string>
     <string name="message_share">View in your space: \n%1$s</string>
     <string name="model_placed_successfully">Model placed successfully.</string>

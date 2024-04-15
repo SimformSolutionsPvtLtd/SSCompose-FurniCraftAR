@@ -1,6 +1,7 @@
 package com.simform.ssfurnicraftar.utils.extension
 
 import android.graphics.Bitmap
+import androidx.palette.graphics.Palette
 import com.simform.ssfurnicraftar.utils.constant.Constants
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -29,3 +30,13 @@ suspend fun Bitmap.saveToFile(path: Path): Boolean = withContext(Dispatchers.IO)
         false
     }
 }
+
+/**
+ * Get vibrant color from the receiver [Bitmap].
+ *
+ * If it fails to get vibrant color, `Black` Color will be returned
+ * as a default value.
+ *
+ */
+fun Bitmap.getVibrantColor() =
+    Palette.from(this).generate().getDarkVibrantColor(0x000000)

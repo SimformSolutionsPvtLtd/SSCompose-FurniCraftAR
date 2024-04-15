@@ -58,6 +58,7 @@ fun SSFurniCraftARApp(
                         snackbarHostState.showSnackbar(
                             message = message,
                             actionLabel = action,
+                            withDismissAction = true,
                             duration = SnackbarDuration.Short
                         ) == SnackbarResult.ActionPerformed
                     }

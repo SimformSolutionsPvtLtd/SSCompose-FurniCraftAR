@@ -31,6 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.simform.ssfurnicraftar.R
+import com.simform.ssfurnicraftar.ui.arview.ColorState
 import com.simform.ssfurnicraftar.ui.component.QuitDialog
 import com.simform.ssfurnicraftar.ui.theme.LocalDimens
 import com.simform.ssfurnicraftar.utils.constant.Constants
@@ -42,7 +43,7 @@ import kotlin.math.roundToInt
 @Composable
 fun DownloadRoute(
     modifier: Modifier = Modifier,
-    onDownloadComplete: (String, Path, Int?) -> Unit,
+    onDownloadComplete: (String, Path, ColorState) -> Unit,
     viewModel: DownloadViewModel = hiltViewModel()
 ) {
     val downloadUiState by viewModel.downloadUiState.collectAsStateWithLifecycle()
