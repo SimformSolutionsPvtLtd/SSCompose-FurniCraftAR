@@ -7,15 +7,17 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.simform.ssfurnicraftar.ui.arview.ARViewRoute
+import com.simform.ssfurnicraftar.ui.arview.ColorState
 
 internal const val PRODUCT_ID_ARG = "productId"
 internal const val MODEL_COLOR_ARG = "modelColor"
 const val ARVIEW_ROUTE_BASE = "arview_route"
 const val ARVIEW_ROUTE = "$ARVIEW_ROUTE_BASE/{$PRODUCT_ID_ARG}?$MODEL_COLOR_ARG={$MODEL_COLOR_ARG}"
 
-fun NavController.navigateToARView(productId: String, modelColor: Int? = null) {
+fun NavController.navigateToARView(productId: String, modelColor: ColorState = ColorState.None) {
     val baseRoute = "$ARVIEW_ROUTE_BASE/$productId"
-    val route = modelColor?.let { "$baseRoute?$MODEL_COLOR_ARG=$modelColor" } ?: baseRoute
+    val colorValue = modelColor.stringValue
+    val route = colorValue?.let { "$baseRoute?$MODEL_COLOR_ARG=$it" } ?: baseRoute
     navigate(route)
 }
 
@@ -40,10 +42,10 @@ fun NavGraphBuilder.arViewScreen(
 
 internal data class ARViewArgs(
     val productId: String,
-    val modelColor: Int?
+    val modelColor: ColorState
 ) {
     constructor(savedStateHandle: SavedStateHandle) : this(
         productId = requireNotNull(savedStateHandle[PRODUCT_ID_ARG]),
-        modelColor = (savedStateHandle.get<String>(MODEL_COLOR_ARG))?.toInt()
+        modelColor = ColorState.parseFrom(savedStateHandle.get<String>(MODEL_COLOR_ARG))
     )
 }

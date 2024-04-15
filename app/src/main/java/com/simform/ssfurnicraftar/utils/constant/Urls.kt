@@ -1,7 +1,6 @@
 package com.simform.ssfurnicraftar.utils.constant
 
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
+import com.simform.ssfurnicraftar.ui.arview.ColorState
 
 /**
  * API URLs collection.
@@ -20,18 +19,16 @@ object Urls {
      */
     private const val BASE = "https://api.sketchfab.com/v3/"
 
-    /**
-     * Get base url for SketchFab API
-     */
     fun getBaseUrl() = BASE
 
     /**
      * Get furniture model url with optional color value
      *
      * @param modelId The furniture model id to share
-     * @param color The color option to share
+     * @param color The [ColorState] option to share
      */
-    fun getModelUrl(modelId: String, color: Color? = null) = "$MODEL/$modelId".let { modelUrl ->
-        color?.let { "${modelUrl}?$MODEL_COLOR_ARG=${color.toArgb()}" } ?: modelUrl
-    }
+    fun getModelUrl(modelId: String, color: ColorState = ColorState.None) =
+        "$MODEL/$modelId".let { modelUrl ->
+            color.stringValue?.let { "${modelUrl}?$MODEL_COLOR_ARG=$it" } ?: modelUrl
+        }
 }

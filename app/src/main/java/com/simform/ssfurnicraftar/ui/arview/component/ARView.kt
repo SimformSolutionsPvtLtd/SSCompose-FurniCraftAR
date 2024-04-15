@@ -2,6 +2,9 @@ package com.simform.ssfurnicraftar.ui.arview.component
 
 import android.graphics.Bitmap
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -9,7 +12,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -26,16 +31,22 @@ import com.google.ar.core.Plane
 import com.google.ar.core.Pose
 import com.google.ar.core.Session
 import com.google.ar.core.TrackingFailureReason
+import com.google.ar.core.exceptions.NotYetAvailableException
 import com.simform.ssfurnicraftar.ui.arview.ARViewUiState
+import com.simform.ssfurnicraftar.ui.arview.ColorState
 import com.simform.ssfurnicraftar.ui.theme.LocalDimens
+import com.simform.ssfurnicraftar.utils.YuvToRgbConverter
 import com.simform.ssfurnicraftar.utils.constant.Constants
 import com.simform.ssfurnicraftar.utils.extension.captureImage
 import com.simform.ssfurnicraftar.utils.extension.clone
 import com.simform.ssfurnicraftar.utils.extension.enableGestures
 import com.simform.ssfurnicraftar.utils.extension.endBouncingEffect
+import com.simform.ssfurnicraftar.utils.extension.getVibrantColor
 import com.simform.ssfurnicraftar.utils.extension.setColor
 import com.simform.ssfurnicraftar.utils.extension.startBouncingEffect
 import com.simform.ssfurnicraftar.utils.extension.startModelRotation
+import com.simform.ssfurnicraftar.utils.extension.toSVColor
+import com.simform.ssfurnicraftar.utils.rememberYuvToRgbConverter
 import io.github.sceneview.ar.ARScene
 import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.ar.arcore.createAnchorOrNull
@@ -51,8 +62,14 @@ import io.github.sceneview.rememberModelLoader
 import io.github.sceneview.rememberNodes
 import io.github.sceneview.rememberOnGestureListener
 import io.github.sceneview.rememberView
+import timber.log.Timber
 import java.util.EnumSet
-import io.github.sceneview.math.Color as SVColor
+
+/**
+ * Reusable bitmap for dynamic color generation.
+ */
+private lateinit var dynamicBitmap: Bitmap
+private const val DYNAMIC_COLOR_UPDATE_THRESHOLD = 400 // ms
 
 @Composable
 internal fun ARView(
@@ -64,6 +81,9 @@ internal fun ARView(
     onCapture: ((Bitmap) -> Unit)? = null,
     onModelPlace: () -> Unit
 ) {
+    // YUV image to RGB image converter
+    val rgbConverter = rememberYuvToRgbConverter()
+
     // The destroy calls are automatically made when their disposable effect leaves
     // the composition or its key changes.
     val engine = rememberEngine()
@@ -91,6 +111,24 @@ internal fun ARView(
     var colorMaterials by remember { mutableStateOf<List<List<MaterialInstance>>?>(null) }
     var showCoachingOverlay by remember { mutableStateOf(true) }
     var showGestureOverlay by remember { mutableStateOf(false) }
+    val isDynamicColor by remember(arViewUiState.modelColor) {
+        derivedStateOf {
+            arViewUiState.modelColor is ColorState.Dynamic
+        }
+    }
+    var currentColor by remember { mutableStateOf(Color.White) }
+    val animatedColor by animateColorAsState(
+        targetValue = currentColor,
+        label = "ModelAnimatedColor",
+        animationSpec = tween(DYNAMIC_COLOR_UPDATE_THRESHOLD, easing = LinearEasing)
+    )
+    val lastColorUpdateTime by remember(currentColor) {
+        mutableLongStateOf(System.currentTimeMillis())
+    }
+
+    LaunchedEffect(key1 = animatedColor) {
+        model?.setColor(animatedColor.toSVColor())
+    }
 
     LaunchedEffect(key1 = enableCapture) {
         if (enableCapture) {
@@ -132,14 +170,20 @@ internal fun ARView(
     }
 
     LaunchedEffect(key1 = arViewUiState.modelColor, key2 = model) {
-        if (arViewUiState.modelColor == null) {
-            originalMaterials?.let { model?.materialInstances = it }
-            return@LaunchedEffect
-        }
+        when (arViewUiState.modelColor) {
+            is ColorState.Color -> {
+                colorMaterials?.let { model?.materialInstances = it }
+                currentColor = arViewUiState.modelColor.value
+            }
 
-        arViewUiState.modelColor.let { (r, g, b, a) ->
-            colorMaterials?.let { model?.materialInstances = it }
-            model?.setColor(SVColor(r, g, b, a))
+            ColorState.Dynamic -> {
+                currentColor = Color.White
+                colorMaterials?.let { model?.materialInstances = it }
+            }
+
+            ColorState.None -> {
+                originalMaterials?.let { model?.materialInstances = it }
+            }
         }
     }
 
@@ -202,6 +246,11 @@ internal fun ARView(
                         val newPosition = updatedFrame.getPose(x, y)?.position ?: return@ARScene
                         worldPosition = Position(newPosition.x, newPosition.y, newPosition.z)
                     }
+                }
+
+                if (isDynamicColor) {
+                    if (System.currentTimeMillis() - lastColorUpdateTime < DYNAMIC_COLOR_UPDATE_THRESHOLD) return@ARScene
+                    currentColor = updatedFrame.getDynamicColor(rgbConverter) ?: return@ARScene
                 }
             },
             onViewCreated = { arSceneView = this },
@@ -280,3 +329,26 @@ private fun Frame.createCenterAnchorNode(engine: Engine): AnchorNode? =
  */
 private fun Frame.getPose(x: Float, y: Float): Pose? =
     hitTest(x, y).firstOrNull()?.hitPose
+
+/**
+ * Get dynamic color from receiver [Frame].
+ *
+ * @return Returns dynamic [Color] or null if failed to get.
+ */
+private fun Frame.getDynamicColor(converter: YuvToRgbConverter): Color? =
+    try {
+        acquireCameraImage().use { image ->
+            if (!::dynamicBitmap.isInitialized) {
+                dynamicBitmap =
+                    Bitmap.createBitmap(image.width, image.height, Bitmap.Config.ARGB_8888)
+            }
+            converter.yuvToRgb(image, dynamicBitmap)
+        }
+
+        val color = dynamicBitmap.getVibrantColor()
+        // If failed to get the vibrant color, don't return default color
+        if (color == 0) null else Color(color)
+    } catch (notAvailableException: NotYetAvailableException) {
+        Timber.d("Frame is not yet available")
+        null
+    }
