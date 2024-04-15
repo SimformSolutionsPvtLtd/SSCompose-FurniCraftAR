@@ -94,6 +94,9 @@ internal fun ARView(
     val modelLoader = rememberModelLoader(engine)
     val childNodes = rememberNodes()
     val view = rememberView(engine)
+    // Temporary workaround to prevent crashes upon destruction of ARSceneView.
+    // Check https://github.com/SceneView/sceneview-android/issues/450 for more details.
+    val cameraNode = remember { ARSceneView.createARCameraNode(engine) }
 
     // Currently loaded model
     var model by remember { mutableStateOf<ModelNode?>(null) }
@@ -194,6 +197,7 @@ internal fun ARView(
     Box(modifier = modifier.fillMaxSize()) {
         ARScene(
             modifier = modifier.fillMaxSize(),
+            cameraNode = cameraNode,
             childNodes = childNodes,
             engine = engine,
             view = view,
