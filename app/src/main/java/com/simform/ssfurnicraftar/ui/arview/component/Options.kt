@@ -4,6 +4,8 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -20,10 +22,8 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,7 +36,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.simform.ssfurnicraftar.R
 import com.simform.ssfurnicraftar.ui.arview.ARViewUiState
 import com.simform.ssfurnicraftar.ui.component.ColorPicker
@@ -82,20 +81,21 @@ fun RotationOption(
     onClick: () -> Unit,
 ) {
     val contentColor by animateColorAsState(
-        targetValue = if (rotationEnabled) Color.Cyan else Color.DarkGray,
+        targetValue = if (rotationEnabled) MaterialTheme.colorScheme.primary else Color.LightGray,
         label = "RotationIconColor"
     )
 
-    IconButton(
-        modifier = modifier,
-        onClick = onClick
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_rotate_360),
-            contentDescription = stringResource(R.string.cd_rotate_360),
-            tint = contentColor
-        )
-    }
+    Icon(
+        modifier = modifier
+            .size(LocalDimens.ARView.OptionsIconSize)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primaryContainer)
+            .clickable { onClick() }
+            .padding(LocalDimens.SpacingSmall),
+        painter = painterResource(R.drawable.ic_rotate_360),
+        contentDescription = stringResource(R.string.cd_rotate_360),
+        tint = contentColor
+    )
 }
 
 @Composable
@@ -103,15 +103,16 @@ private fun ShareOption(
     modifier: Modifier = Modifier,
     onShare: () -> Unit
 ) {
-    IconButton(
-        modifier = modifier,
-        onClick = onShare
-    ) {
-        Icon(
-            imageVector = Icons.Default.Share,
-            contentDescription = stringResource(R.string.share)
-        )
-    }
+    Icon(
+        modifier = modifier
+            .size(LocalDimens.ARView.OptionsIconSize)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primaryContainer)
+            .clickable { onShare() }
+            .padding(LocalDimens.ARView.ShareOptionSpacing),
+        imageVector = Icons.Default.Share,
+        contentDescription = stringResource(R.string.share)
+    )
 }
 
 @Composable

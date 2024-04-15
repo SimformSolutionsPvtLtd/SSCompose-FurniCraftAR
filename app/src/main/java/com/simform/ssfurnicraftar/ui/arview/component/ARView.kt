@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -14,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import com.google.android.filament.Engine
 import com.google.android.filament.MaterialInstance
 import com.google.ar.core.CameraConfig
@@ -34,7 +36,6 @@ import com.simform.ssfurnicraftar.utils.extension.endBouncingEffect
 import com.simform.ssfurnicraftar.utils.extension.setColor
 import com.simform.ssfurnicraftar.utils.extension.startBouncingEffect
 import com.simform.ssfurnicraftar.utils.extension.startModelRotation
-import dev.romainguy.kotlin.math.Float3
 import io.github.sceneview.ar.ARScene
 import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.ar.arcore.createAnchorOrNull
@@ -208,7 +209,9 @@ internal fun ARView(
         )
 
         AnimatedVisibility(
-            modifier = Modifier.align(Alignment.Center),
+            modifier = Modifier
+                .align(Alignment.Center)
+                .background(Color.Black.copy(alpha = LocalDimens.ARView.OverlayAlpha)),
             visible = showCoachingOverlay,
             enter = fadeIn(),
             exit = fadeOut()
@@ -219,7 +222,9 @@ internal fun ARView(
         }
 
         AnimatedVisibility(
-            modifier = Modifier.align(Alignment.Center),
+            modifier = Modifier
+                .align(Alignment.Center)
+                .background(Color.Black.copy(alpha = LocalDimens.ARView.OverlayAlpha)),
             visible = showGestureOverlay,
             enter = fadeIn(),
             exit = fadeOut()

@@ -49,7 +49,9 @@ object LocalDimens {
         val OptionsIconSize = 44.dp
         const val MODEL_PLACEMENT_WIDTH_PROPORTION = 2F
         const val MODEL_PLACEMENT_HEIGHT_PROPORTION = 2F
-        val GestureAnimRatio = 1F
+        const val GestureAnimRatio = 1F
+        val ShareOptionSpacing = 12.dp
+        const val OverlayAlpha = 0.5F
     }
 
     // ShimmerEffect
