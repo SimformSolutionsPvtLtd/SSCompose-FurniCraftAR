@@ -8,6 +8,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
+import com.simform.ssfurnicraftar.ui.arview.ColorState
 import com.simform.ssfurnicraftar.ui.download.DownloadRoute
 import com.simform.ssfurnicraftar.utils.constant.Urls
 import java.nio.file.Path
@@ -25,7 +26,7 @@ fun NavController.navigateToDownload(productId: String) {
 }
 
 fun NavGraphBuilder.downloadScreen(
-    onDownloadComplete: (String, Path, Int?) -> Unit
+    onDownloadComplete: (String, Path, ColorState) -> Unit
 ) {
     composable(
         route = DOWNLOAD_ROUTE,
@@ -45,10 +46,10 @@ fun NavGraphBuilder.downloadScreen(
 
 internal data class DownloadArgs(
     val productId: String,
-    val modelColor: Int?
+    val modelColor: ColorState
 ) {
     constructor(savedStateHandle: SavedStateHandle) : this(
         productId = requireNotNull(savedStateHandle[PRODUCT_ID_ARG]),
-        modelColor = (savedStateHandle.get<String>(MODEL_COLOR_ARG))?.toInt()
+        modelColor = ColorState.parseFrom(savedStateHandle.get<String>(MODEL_COLOR_ARG))
     )
 }

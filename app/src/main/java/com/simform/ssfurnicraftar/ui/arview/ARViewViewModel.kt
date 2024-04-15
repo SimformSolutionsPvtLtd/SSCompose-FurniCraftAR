@@ -1,7 +1,6 @@
 package com.simform.ssfurnicraftar.ui.arview
 
 import android.graphics.Bitmap
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -28,28 +27,19 @@ class ARViewViewModel @Inject constructor(
 
     private val args = ARViewArgs(savedStateHandle)
 
-    private val _arViewUiState = MutableStateFlow(ARViewUiState(
-        productId = args.productId,
-        modelPath = getModelPath(args.productId).asStringPath(),
-        modelColor = args.modelColor?.let { Color(it) }
-    ))
+    private val _arViewUiState = MutableStateFlow(
+        ARViewUiState(
+            productId = args.productId,
+            modelPath = getModelPath(args.productId).asStringPath(),
+            modelColor = args.modelColor
+        )
+    )
     val arViewUiState = _arViewUiState.asStateFlow()
 
-    /**
-     * Change model color to new color or default.
-     *
-     * @param color The new color to apply. When passed
-     * null default model color will be used.
-     */
-    fun changeColor(color: Color?) {
+    fun changeColor(color: ColorState) {
         _arViewUiState.update { it.copy(modelColor = color) }
     }
 
-    /**
-     * Create shareable uri for given [bitmap]
-     *
-     * @param bitmap The image bitmap to share
-     */
     fun createShareUri(bitmap: Bitmap) {
         val fileName = "${Calendar.getInstance().timeInMillis}.${Constants.IMAGE_FILE_EXTENSION}"
         val filePath = fileHelper.imageShareDir() / Paths.get(fileName)
@@ -67,7 +57,7 @@ class ARViewViewModel @Inject constructor(
      * Get local model path from given [productId].
      */
     private fun getModelPath(productId: String): Path =
-        fileHelper.getModelDir().resolve("${productId}.${Constants.MODEL_EXTENSION}")
+        fileHelper.getModelDir().resolve("${productId}.glb")
 
     private fun Path.asStringPath(): String = toUri().toString()
 }

@@ -48,12 +48,11 @@ fun ARViewRoute(
 private fun ARViewScreen(
     modifier: Modifier = Modifier,
     arViewUiState: ARViewUiState,
-    onColorChange: (Color?) -> Unit,
+    onColorChange: (ColorState) -> Unit,
     onShare: (Bitmap) -> Unit,
     onNavigateBack: () -> Unit,
     onShowSnackbar: suspend (String, String?) -> Boolean
 ) {
-    // Handle back press and show confirmation dialog when quiting AR View
     var showQuitDialog by remember { mutableStateOf(false) }
     var captureImage by rememberSaveable {
         mutableStateOf(false)
@@ -70,6 +69,8 @@ private fun ARViewScreen(
     )
     val modelPlacedMessage = stringResource(R.string.model_placed_successfully)
 
+    val dynamicColorMessage = stringResource(R.string.dynamic_color_enabled)
+
     var rotationEnabled by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(key1 = capturedImage) {
@@ -82,6 +83,12 @@ private fun ARViewScreen(
     LaunchedEffect(key1 = arViewUiState.shareUri) {
         arViewUiState.shareUri?.let { uri ->
             context.shareImage(uri, shareMessage)
+        }
+    }
+
+    LaunchedEffect(key1 = arViewUiState.modelColor) {
+        if (arViewUiState.modelColor is ColorState.Dynamic) {
+            onShowSnackbar(dynamicColorMessage, null)
         }
     }
 

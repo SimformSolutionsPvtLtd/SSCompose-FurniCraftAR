@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Share
@@ -36,8 +38,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.simform.ssfurnicraftar.R
 import com.simform.ssfurnicraftar.ui.arview.ARViewUiState
+import com.simform.ssfurnicraftar.ui.arview.ColorState
 import com.simform.ssfurnicraftar.ui.component.ColorPicker
 import com.simform.ssfurnicraftar.ui.theme.LocalDimens
 import com.simform.ssfurnicraftar.utils.constant.Constants
@@ -49,7 +53,7 @@ internal fun Options(
     rotationEnabled: Boolean,
     onRotationToggle: () -> Unit,
     onShare: () -> Unit,
-    onColorChange: (Color?) -> Unit
+    onColorChange: (ColorState) -> Unit
 ) {
     Box(
         modifier = modifier
@@ -118,8 +122,8 @@ private fun ShareOption(
 @Composable
 private fun ColorOption(
     modifier: Modifier = Modifier,
-    selectedColor: Color?,
-    onSelect: (Color?) -> Unit
+    selectedColor: ColorState,
+    onSelect: (ColorState) -> Unit
 ) {
     var showPicker by rememberSaveable { mutableStateOf(false) }
 
@@ -141,7 +145,7 @@ private fun ColorOption(
                     Button(
                         modifier = Modifier.size(LocalDimens.ARView.OptionsIconSize),
                         onClick = {
-                            onSelect(null)
+                            onSelect(ColorState.None)
                         },
                         contentPadding = PaddingValues(LocalDimens.NoSpacing)
                     ) {
@@ -151,10 +155,16 @@ private fun ColorOption(
                         )
                     }
 
+                    DynamicColorButton(
+                        isSelected = selectedColor is ColorState.Dynamic
+                    ) {
+                        onSelect(ColorState.Dynamic)
+                    }
+
                     ColorPicker(
                         modifier = Modifier,
-                        initialColor = selectedColor,
-                        onSelect = onSelect
+                        initialColor = (selectedColor as? ColorState.Color)?.value,
+                        onSelect = { onSelect(ColorState.Color(it)) }
                     )
                 }
             }
@@ -183,4 +193,29 @@ private fun ColorOption(
             }
         }
     }
+}
+
+@Composable
+private fun DynamicColorButton(
+    modifier: Modifier = Modifier,
+    isSelected: Boolean = false,
+    onSelect: () -> Unit
+) {
+    Icon(
+        modifier = modifier
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primary)
+            .size(LocalDimens.ARView.OptionsIconSize)
+            .border(
+                width = if (isSelected) 2.dp else 0.dp,
+                color = Color.Black,
+                shape = CircleShape
+            )
+            .padding(LocalDimens.SpacingXS)
+            .clickable { onSelect() },
+        imageVector = Icons.Default.AutoAwesome,
+        contentDescription = stringResource(R.string.dynamic_color),
+        tint = MaterialTheme.colorScheme.onPrimary
+    )
+
 }

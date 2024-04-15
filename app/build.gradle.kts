@@ -138,6 +138,9 @@ dependencies {
     // Lottie
     implementation(libs.lottie)
 
+    // Palette
+    implementation(libs.palette)
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
