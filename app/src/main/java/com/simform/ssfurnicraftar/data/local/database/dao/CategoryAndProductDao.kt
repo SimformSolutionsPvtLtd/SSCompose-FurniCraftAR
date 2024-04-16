@@ -29,7 +29,10 @@ abstract class CategoryAndProductDao : ProductDao, CategoryDao {
      * @param products The products corresponding to [category]
      */
     @Transaction
-    open suspend fun insertCategoryWithProducts(category: CategoryEntity, products: List<ProductEntity>) {
+    open suspend fun insertCategoryWithProducts(
+        category: CategoryEntity,
+        products: List<ProductEntity>
+    ) {
         val categoryId = findCategory(category.category)?.id ?: insertCategory(category)
 
         upsertProducts(products)
@@ -53,6 +56,22 @@ abstract class CategoryAndProductDao : ProductDao, CategoryDao {
     """
     )
     abstract fun getProductsByCategory(category: Category): PagingSource<Int, ProductEntity>
+
+    /**
+     * Get category for given [productId].
+     *
+     * This query uses [CategoryProductCrossRef] table and perform joint operation
+     * to retrieve category for particular product.
+     */
+    @Transaction
+    @Query(
+        value = """
+            SELECT category.* FROM category
+            LEFT JOIN category_product ON categoryId = category.id
+            WHERE productId = :productId
+        """
+    )
+    abstract suspend fun getCategoryByProductId(productId: String): CategoryEntity
 
     /**
      * Delete all categories and products

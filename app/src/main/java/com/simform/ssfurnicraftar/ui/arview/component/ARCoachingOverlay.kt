@@ -10,23 +10,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
-import com.google.ar.core.TrackingFailureReason
 import com.simform.ssfurnicraftar.R
 import com.simform.ssfurnicraftar.ui.theme.LocalDimens
-import io.github.sceneview.ar.getDescription
 
 @Composable
 internal fun ARCoachingOverlay(
     modifier: Modifier = Modifier,
-    failureReason: TrackingFailureReason
+    message: String = ""
 ) {
-    val failureMessage = failureReason.getDescription(LocalContext.current)
     val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.ar_coaching_overlay))
     val progress by animateLottieCompositionAsState(
         composition = composition,
@@ -41,7 +37,7 @@ internal fun ARCoachingOverlay(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = failureMessage,
+            text = message,
             style = MaterialTheme.typography.titleLarge
         )
 

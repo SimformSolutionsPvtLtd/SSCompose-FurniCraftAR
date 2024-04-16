@@ -21,13 +21,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import com.google.android.filament.Engine
 import com.google.android.filament.MaterialInstance
 import com.google.ar.core.CameraConfig
 import com.google.ar.core.CameraConfigFilter
 import com.google.ar.core.Config
+import com.google.ar.core.Config.PlaneFindingMode
 import com.google.ar.core.Frame
-import com.google.ar.core.Plane
 import com.google.ar.core.Pose
 import com.google.ar.core.Session
 import com.google.ar.core.TrackingFailureReason
@@ -41,6 +42,7 @@ import com.simform.ssfurnicraftar.utils.extension.captureImage
 import com.simform.ssfurnicraftar.utils.extension.clone
 import com.simform.ssfurnicraftar.utils.extension.enableGestures
 import com.simform.ssfurnicraftar.utils.extension.endBouncingEffect
+import com.simform.ssfurnicraftar.utils.extension.getDescription
 import com.simform.ssfurnicraftar.utils.extension.getVibrantColor
 import com.simform.ssfurnicraftar.utils.extension.setColor
 import com.simform.ssfurnicraftar.utils.extension.startBouncingEffect
@@ -49,9 +51,11 @@ import com.simform.ssfurnicraftar.utils.extension.toSVColor
 import com.simform.ssfurnicraftar.utils.rememberYuvToRgbConverter
 import io.github.sceneview.ar.ARScene
 import io.github.sceneview.ar.ARSceneView
+import io.github.sceneview.ar.arcore.configure
 import io.github.sceneview.ar.arcore.createAnchorOrNull
 import io.github.sceneview.ar.arcore.getUpdatedPlanes
 import io.github.sceneview.ar.arcore.position
+import io.github.sceneview.ar.getDescription
 import io.github.sceneview.ar.node.AnchorNode
 import io.github.sceneview.math.Position
 import io.github.sceneview.math.Rotation
@@ -223,6 +227,13 @@ internal fun ARView(
             onSessionUpdated = { session, updatedFrame ->
                 frame = updatedFrame
 
+                if (session.config.planeFindingMode != arViewUiState.findingMode) {
+                    session.configure {
+                        it.planeFindingMode = arViewUiState.findingMode
+                        Timber.d("Updating finding mode to: ${it.planeFindingMode}")
+                    }
+                }
+
                 // If no model is placed then create anchor node and add
                 // model node to that anchor
                 if (childNodes.isEmpty()) {
@@ -266,7 +277,8 @@ internal fun ARView(
             exit = fadeOut()
         ) {
             ARCoachingOverlay(
-                failureReason = trackingFailureReason ?: TrackingFailureReason.NONE
+                message = trackingFailureReason?.getDescription(LocalContext.current)
+                    ?: arViewUiState.findingMode.getDescription(LocalContext.current)
             )
         }
 
@@ -306,7 +318,7 @@ private fun Config.configure() {
     depthMode = Config.DepthMode.DISABLED
     updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
     instantPlacementMode = Config.InstantPlacementMode.LOCAL_Y_UP
-    planeFindingMode = Config.PlaneFindingMode.HORIZONTAL
+    planeFindingMode = PlaneFindingMode.HORIZONTAL
     lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
 }
 
@@ -314,7 +326,7 @@ private fun Config.configure() {
  * Create anchor node at the center of the screen
  */
 private fun Frame.createCenterAnchorNode(engine: Engine): AnchorNode? =
-    getUpdatedPlanes().firstOrNull { it.type == Plane.Type.HORIZONTAL_UPWARD_FACING }
+    getUpdatedPlanes().firstOrNull()
         ?.let { it.createAnchorOrNull(it.centerPose) }
         ?.let { anchor ->
             AnchorNode(engine, anchor).apply {

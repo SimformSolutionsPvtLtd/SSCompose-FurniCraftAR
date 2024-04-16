@@ -10,12 +10,14 @@ import com.simform.ssfurnicraftar.data.local.database.model.ProductEntity
 import com.simform.ssfurnicraftar.data.local.database.model.RemoteKey
 import com.simform.ssfurnicraftar.data.local.database.model.asEntity
 import com.simform.ssfurnicraftar.data.model.Category
+import com.simform.ssfurnicraftar.data.model.CategoryInfo
 import com.simform.ssfurnicraftar.data.remote.NetworkDataSource
 import com.simform.ssfurnicraftar.data.remote.apiresult.ApiError
 import com.simform.ssfurnicraftar.data.remote.apiresult.ApiException
 import com.simform.ssfurnicraftar.data.remote.apiresult.ApiSuccess
 import com.simform.ssfurnicraftar.data.remote.model.NetworkModel
 import com.simform.ssfurnicraftar.data.remote.model.NetworkModels
+import com.simform.ssfurnicraftar.domain.GetPlaneTypeByCategoryUseCase
 import com.simform.ssfurnicraftar.utils.extension.encodeToBase64
 import timber.log.Timber
 import javax.inject.Inject
@@ -24,7 +26,8 @@ import javax.inject.Inject
 class ModelRemoteMediator @Inject constructor(
     private val category: Category,
     private val networkDataSource: NetworkDataSource,
-    private val database: SSFurniCraftARDatabase
+    private val database: SSFurniCraftARDatabase,
+    private val getPlaneTypeByCategoryUseCase: GetPlaneTypeByCategoryUseCase
 ) : RemoteMediator<Int, ProductEntity>() {
 
     /**
@@ -86,7 +89,8 @@ class ModelRemoteMediator @Inject constructor(
                 categoryAndModelDao.deleteProductsByCategory(category)
             }
 
-            categoryAndModelDao.insertCategoryWithProducts(category.asEntity(), models)
+            val categoryInfo = CategoryInfo(category, getPlaneTypeByCategoryUseCase(category))
+            categoryAndModelDao.insertCategoryWithProducts(categoryInfo.asEntity(), models)
             categoryAndModelDao.findCategory(category)?.id?.let { categoryId ->
                 // Create remote keys for pagination
                 val keys = models.map {

@@ -11,6 +11,7 @@
     <string name="category_bed">Bed</string>
     <string name="category_sofa">Sofa</string>
     <string name="category_desk">Desk</string>
+    <string name="category_ac">AC</string>
 
     <!-- Download Screen -->
     <string name="title_quit_download">Are you sure you want to quit download?</string>
@@ -29,4 +30,7 @@
     <string name="message_move_gesture">Move model around the detected surface</string>
     <string name="message_rotate_gesture">Rotate the model by using two fingers</string>
     <string name="message_zoom_gesture">Zoom in or out on the model by using a pinch gesture</string>
+    <string name="message_scan_horizontal_plane">Scan horizontal plane</string>
+    <string name="message_scan_vertical_plane">Scan vertical plane</string>
+    <string name="message_scan_any_plane">Scan any plane surface</string>
 </resources>

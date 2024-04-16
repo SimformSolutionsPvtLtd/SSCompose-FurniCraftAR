@@ -4,6 +4,8 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.simform.ssfurnicraftar.data.model.Category
+import com.simform.ssfurnicraftar.data.model.CategoryInfo
+import com.simform.ssfurnicraftar.data.model.PlaneType
 import com.simform.ssfurnicraftar.utils.constant.Constants
 
 @Entity(
@@ -15,7 +17,8 @@ import com.simform.ssfurnicraftar.utils.constant.Constants
 data class CategoryEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    val category: Category
+    val category: Category,
+    val planeType: PlaneType
 )
 
-fun Category.asEntity() = CategoryEntity(category = this)
+fun CategoryInfo.asEntity() = CategoryEntity(category = category, planeType = planeType)

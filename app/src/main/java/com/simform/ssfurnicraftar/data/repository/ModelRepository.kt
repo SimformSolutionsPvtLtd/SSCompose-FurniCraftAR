@@ -2,6 +2,7 @@ package com.simform.ssfurnicraftar.data.repository
 
 import androidx.paging.PagingData
 import com.simform.ssfurnicraftar.data.model.Category
+import com.simform.ssfurnicraftar.data.model.CategoryInfo
 import com.simform.ssfurnicraftar.data.model.DownloadInfo
 import com.simform.ssfurnicraftar.data.model.Product
 import com.simform.ssfurnicraftar.data.remote.model.DownloadStatus
@@ -14,6 +15,8 @@ interface ModelRepository {
     suspend fun getModels(category: Category): Flow<PagingData<Product>>
 
     fun getCategories(): List<Category>
+
+    suspend fun getProductCategory(productId: String): CategoryInfo
 
     suspend fun getDownloadInfo(modelId: String): Flow<Result<DownloadInfo>>
 
