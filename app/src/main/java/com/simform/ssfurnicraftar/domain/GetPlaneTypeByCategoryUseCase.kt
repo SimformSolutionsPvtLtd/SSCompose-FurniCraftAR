@@ -11,6 +11,7 @@ private val verticalCategories = setOf(Category.AC)
 class GetPlaneTypeByCategoryUseCase @Inject constructor() {
 
     operator fun invoke(category: Category): PlaneType = when {
+        category == Category.UNKNOWN -> PlaneType.HORIZONTAL_AND_VERTICAL
         verticalCategories.contains(category) -> PlaneType.VERTICAL
         else -> PlaneType.HORIZONTAL
     }

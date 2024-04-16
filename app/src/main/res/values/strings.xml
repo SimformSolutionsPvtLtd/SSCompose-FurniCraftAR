@@ -6,6 +6,7 @@
 
     <!-- Products Screen -->
     <string name="no_data">No Data</string>
+    <string name="category_unknown">Unknown</string>
     <string name="category_table">Table</string>
     <string name="category_chair">Chair</string>
     <string name="category_bed">Bed</string>

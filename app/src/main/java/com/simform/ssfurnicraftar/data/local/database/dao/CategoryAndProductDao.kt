@@ -71,7 +71,7 @@ abstract class CategoryAndProductDao : ProductDao, CategoryDao {
             WHERE productId = :productId
         """
     )
-    abstract suspend fun getCategoryByProductId(productId: String): CategoryEntity
+    abstract suspend fun getCategoryByProductId(productId: String): CategoryEntity?
 
     /**
      * Delete all categories and products
