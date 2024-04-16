@@ -5,8 +5,10 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simform.ssfurnicraftar.data.utils.FileHelper
+import com.simform.ssfurnicraftar.domain.GetProductCategoryUseCase
 import com.simform.ssfurnicraftar.ui.arview.navigation.ARViewArgs
 import com.simform.ssfurnicraftar.utils.constant.Constants
+import com.simform.ssfurnicraftar.utils.extension.arFindingMode
 import com.simform.ssfurnicraftar.utils.extension.saveToFile
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +24,8 @@ import kotlin.io.path.div
 @HiltViewModel
 class ARViewViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val fileHelper: FileHelper
+    private val fileHelper: FileHelper,
+    private val getProductCategoryUseCase: GetProductCategoryUseCase
 ) : ViewModel() {
 
     private val args = ARViewArgs(savedStateHandle)
@@ -35,6 +38,10 @@ class ARViewViewModel @Inject constructor(
         )
     )
     val arViewUiState = _arViewUiState.asStateFlow()
+
+    init {
+        updatePlaneFindingMode(args.productId)
+    }
 
     fun changeColor(color: ColorState) {
         _arViewUiState.update { it.copy(modelColor = color) }
@@ -58,6 +65,16 @@ class ARViewViewModel @Inject constructor(
      */
     private fun getModelPath(productId: String): Path =
         fileHelper.getModelDir().resolve("${productId}.glb")
+
+    /**
+     * Update plane finding mode for given [productId]
+     */
+    private fun updatePlaneFindingMode(productId: String) {
+        viewModelScope.launch {
+            val findingMode = getProductCategoryUseCase(productId).planeType.arFindingMode
+            _arViewUiState.update { it.copy(findingMode = findingMode) }
+        }
+    }
 
     private fun Path.asStringPath(): String = toUri().toString()
 }

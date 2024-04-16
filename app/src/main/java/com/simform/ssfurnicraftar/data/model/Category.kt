@@ -11,7 +11,8 @@ enum class Category(
     CHAIR("chair", R.string.category_chair),
     BED("bed", R.string.category_bed),
     SOFA("sofa", R.string.category_sofa),
-    DESK("desk", R.string.category_desk);
+    DESK("desk", R.string.category_desk),
+    AC("ac", R.string.category_ac);
 
     companion object {
         fun valueOrNull(slug: String): Category? = entries.find { it.slug == slug }
