@@ -10,6 +10,7 @@ import com.simform.ssfurnicraftar.data.local.database.SSFurniCraftARDatabase
 import com.simform.ssfurnicraftar.data.local.database.dao.CategoryAndProductDao
 import com.simform.ssfurnicraftar.data.local.database.model.ProductEntity
 import com.simform.ssfurnicraftar.data.model.Category
+import com.simform.ssfurnicraftar.data.model.CategoryInfo
 import com.simform.ssfurnicraftar.data.model.DownloadInfo
 import com.simform.ssfurnicraftar.data.model.Product
 import com.simform.ssfurnicraftar.data.model.asExternalModel
@@ -19,6 +20,7 @@ import com.simform.ssfurnicraftar.data.remote.apiresult.ApiException
 import com.simform.ssfurnicraftar.data.remote.apiresult.ApiSuccess
 import com.simform.ssfurnicraftar.data.remote.mediator.ModelRemoteMediator
 import com.simform.ssfurnicraftar.data.remote.model.DownloadStatus
+import com.simform.ssfurnicraftar.domain.GetPlaneTypeByCategoryUseCase
 import com.simform.ssfurnicraftar.utils.result.Result
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -32,7 +34,8 @@ class ModelRepositoryImpl @Inject constructor(
     private val categoryAndProductDao: CategoryAndProductDao,
     private val database: SSFurniCraftARDatabase,
     private val networkDataSource: NetworkDataSource,
-    private val localDataSource: LocalDataSource
+    private val localDataSource: LocalDataSource,
+    private val getPlaneTypeByCategoryUseCase: GetPlaneTypeByCategoryUseCase
 ) : ModelRepository {
 
     @OptIn(ExperimentalPagingApi::class)
@@ -41,13 +44,16 @@ class ModelRepositoryImpl @Inject constructor(
             config = PagingConfig(
                 pageSize = 24
             ),
-            remoteMediator = ModelRemoteMediator(category, networkDataSource, database),
+            remoteMediator = ModelRemoteMediator(category, networkDataSource, database, getPlaneTypeByCategoryUseCase),
             pagingSourceFactory = {
                 categoryAndProductDao.getProductsByCategory(category)
             }
         ).flow.map { it.map(ProductEntity::asExternalModel) }
 
     override fun getCategories(): List<Category> = localDataSource.getCategories()
+
+    override suspend fun getProductCategory(productId: String): CategoryInfo =
+        localDataSource.getProductCategory(productId).asExternalModel()
 
     override suspend fun getDownloadInfo(modelId: String): Flow<Result<DownloadInfo>> = flow {
         emit(Result.Loading)
