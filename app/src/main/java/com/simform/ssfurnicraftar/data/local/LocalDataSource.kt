@@ -10,7 +10,7 @@ class LocalDataSource @Inject constructor(
     private val categoryAndProductDao: CategoryAndProductDao
 ) {
 
-    fun getCategories(): List<Category> = Category.entries
+    fun getCategories(): List<Category> = Category.entries.dropWhile { it == Category.UNKNOWN }
 
     suspend fun getProductCategory(productId: String) = withContext(Dispatchers.IO) {
         categoryAndProductDao.getCategoryByProductId(productId)

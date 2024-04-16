@@ -44,7 +44,12 @@ class ModelRepositoryImpl @Inject constructor(
             config = PagingConfig(
                 pageSize = 24
             ),
-            remoteMediator = ModelRemoteMediator(category, networkDataSource, database, getPlaneTypeByCategoryUseCase),
+            remoteMediator = ModelRemoteMediator(
+                category,
+                networkDataSource,
+                database,
+                getPlaneTypeByCategoryUseCase
+            ),
             pagingSourceFactory = {
                 categoryAndProductDao.getProductsByCategory(category)
             }
@@ -52,8 +57,25 @@ class ModelRepositoryImpl @Inject constructor(
 
     override fun getCategories(): List<Category> = localDataSource.getCategories()
 
-    override suspend fun getProductCategory(productId: String): CategoryInfo =
-        localDataSource.getProductCategory(productId).asExternalModel()
+    override suspend fun getProductCategory(productId: String): CategoryInfo {
+        val localInfo = localDataSource.getProductCategory(productId)?.asExternalModel()
+        if (localInfo != null) {
+            return localInfo
+        }
+
+        // If model can not be found in database, fetch from network
+        networkDataSource.getModelInfo(productId).let { result ->
+            if (result is ApiSuccess) {
+                val category =
+                    result.data.tags.firstNotNullOfOrNull { Category.valueOrNull(it.slug) }
+                        ?: Category.TABLE
+                val planeType = getPlaneTypeByCategoryUseCase(category)
+                return CategoryInfo(category, planeType)
+            }
+            // Use unknown category as default value when failed to get model data from remote
+            return Category.UNKNOWN.let { CategoryInfo(it, getPlaneTypeByCategoryUseCase(it)) }
+        }
+    }
 
     override suspend fun getDownloadInfo(modelId: String): Flow<Result<DownloadInfo>> = flow {
         emit(Result.Loading)
