@@ -134,7 +134,7 @@ internal fun ARView(
     }
 
     LaunchedEffect(key1 = animatedColor) {
-        model?.setColor(animatedColor.toSVColor())
+        colorMaterials?.setColor(animatedColor.toSVColor())
     }
 
     LaunchedEffect(key1 = enableCapture) {
@@ -184,12 +184,12 @@ internal fun ARView(
             }
 
             ColorState.Dynamic -> {
-                currentColor = Color.White
                 colorMaterials?.let { model?.materialInstances = it }
             }
 
             ColorState.None -> {
                 originalMaterials?.let { model?.materialInstances = it }
+                currentColor = Color.White
             }
         }
     }

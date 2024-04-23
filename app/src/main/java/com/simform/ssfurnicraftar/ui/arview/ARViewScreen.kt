@@ -12,7 +12,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -72,6 +71,9 @@ private fun ARViewScreen(
     val dynamicColorMessage = stringResource(R.string.dynamic_color_enabled)
 
     var rotationEnabled by rememberSaveable { mutableStateOf(false) }
+    var showRotationChangeMessage by rememberSaveable { mutableStateOf(false) }
+    val rotationStartedMessage = stringResource(R.string.message_auto_rotation_started)
+    val rotationStoppedMessage = stringResource(R.string.message_auto_rotation_stopped)
 
     LaunchedEffect(key1 = capturedImage) {
         capturedImage?.let { bitmap ->
@@ -92,6 +94,16 @@ private fun ARViewScreen(
         }
     }
 
+    LaunchedEffect(key1 = showRotationChangeMessage, key2 = rotationEnabled) {
+        if (showRotationChangeMessage) {
+            onShowSnackbar(
+                if (rotationEnabled) rotationStartedMessage else rotationStoppedMessage,
+                null
+            )
+            showRotationChangeMessage = false
+        }
+    }
+
     BackHandler {
         showQuitDialog = !showQuitDialog
     }
@@ -100,7 +112,12 @@ private fun ARViewScreen(
         ARView(
             arViewUiState = arViewUiState,
             rotationEnabled = rotationEnabled,
-            onStopRotation = { rotationEnabled = false },
+            onStopRotation = {
+                if (rotationEnabled) {
+                    rotationEnabled = false
+                    showRotationChangeMessage = true
+                }
+            },
             enableCapture = captureImage,
             onCapture = { capturedImage = it },
         ) {
@@ -111,7 +128,10 @@ private fun ARViewScreen(
 
         Options(
             rotationEnabled = rotationEnabled,
-            onRotationToggle = { rotationEnabled = !rotationEnabled },
+            onRotationToggle = {
+                rotationEnabled = !rotationEnabled
+                showRotationChangeMessage = true
+            },
             onShare = { captureImage = true },
             arViewUiState = arViewUiState,
             onColorChange = onColorChange

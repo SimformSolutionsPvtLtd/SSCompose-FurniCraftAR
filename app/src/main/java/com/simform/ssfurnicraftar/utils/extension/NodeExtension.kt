@@ -24,10 +24,7 @@ import io.github.sceneview.node.Node
  * @param color The new color to set on model
  */
 fun ModelNode.setColor(color: Color) {
-    materialInstances.flatten().forEach { instance ->
-        instance.setBaseColorIndex(Constants.MODEL_BASE_COLOR_INDEX)
-        instance.setBaseColorFactor(color)
-    }
+    materialInstances.setColor(color)
 }
 
 /**
