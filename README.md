@@ -27,7 +27,7 @@ https://github.com/SimformSolutionsPvtLtd/SSCompose-FurniCraftAR/assets/14712610
 - Explore an extensive catalog of furniture products
 - Visualize furniture models in **Augmented Reality**
 - Personalize the color scheme of each furniture model
-- Seamlessly capture and share your Augmented Aeality scenes featuring placed furniture models
+- Seamlessly capture and share your Augmented Reality scenes featuring placed furniture models
 - Use links for quick access to specific models with customized colors
 - Enjoy dynamic model animations for enhanced visualization
 - Experience uninterrupted usage with offline support, utilizing cached data for seamless access to your favorite furniture pieces
