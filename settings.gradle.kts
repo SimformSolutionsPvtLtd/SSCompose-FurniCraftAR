@@ -19,5 +19,7 @@ dependencyResolutionManagement {
     }
 }
 
+gradle.startParameter.excludedTaskNames.addAll(listOf(":buildSrc:testClasses"))
+
 rootProject.name = "SSFurniCraftAR"
 include( ":app")
