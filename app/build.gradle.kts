@@ -40,6 +40,22 @@ android {
         }
     }
 
+    splits {
+        abi {
+            // Enables building multiple APKs per ABI.
+            isEnable = true
+
+            // By default all ABIs are included, so use reset() to only include specified.
+            reset()
+
+            // Specifies a list of ABIs that Gradle should create APKs for.
+            include("x86", "x86_64", "armeabi-v7a", "arm64-v8a")
+
+            // Specifies that we want to also generate a universal APK that includes all ABIs.
+            isUniversalApk = true
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
