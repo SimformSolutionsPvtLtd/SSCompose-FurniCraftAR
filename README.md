@@ -20,7 +20,7 @@ Enter into a virtual showroom where you can browse a vast array of furniture pro
 
 ## :framed_picture: Preview
 
-https://github.com/SimformSolutionsPvtLtd/SSCompose-FurniCraftAR/assets/147126103/3a3bf8e8-8376-4bf5-a2c7-6bc97faee49a
+https://github.com/SimformSolutionsPvtLtd/SSCompose-FurniCraftAR/assets/147126103/267bd46c-cf1d-49f2-903a-7747c8b00bdf
 
 ## :zap: Features
 
