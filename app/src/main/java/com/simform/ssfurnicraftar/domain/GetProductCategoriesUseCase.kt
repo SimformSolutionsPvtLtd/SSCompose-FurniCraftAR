@@ -4,7 +4,7 @@ import com.simform.ssfurnicraftar.data.model.Category
 import com.simform.ssfurnicraftar.data.repository.ModelRepository
 import javax.inject.Inject
 
-class GetProductCategories @Inject constructor(
+class GetProductCategoriesUseCase @Inject constructor(
     private val modelRepository: ModelRepository
 ) {
 

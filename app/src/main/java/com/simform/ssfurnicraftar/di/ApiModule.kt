@@ -4,8 +4,8 @@ import android.content.Context
 import com.simform.ssfurnicraftar.BuildConfig
 import com.simform.ssfurnicraftar.data.remote.api.ApiService
 import com.simform.ssfurnicraftar.data.remote.apiresult.ApiResultCallAdapterFactory
-import com.simform.ssfurnicraftar.utils.constant.Urls
 import com.simform.ssfurnicraftar.data.remote.interceptor.ApiAuthenticator
+import com.simform.ssfurnicraftar.utils.constant.Urls
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -49,14 +49,15 @@ object ApiModule {
     @Singleton
     @Provides
     @Named(HTTP_DOWNLOAD_LOGGING_INTERCEPTOR)
-    fun providesHttpDownloadLoggingInterceptor(): HttpLoggingInterceptor = HttpLoggingInterceptor().apply {
-        level = if (BuildConfig.DEBUG)
+    fun providesHttpDownloadLoggingInterceptor(): HttpLoggingInterceptor =
+        HttpLoggingInterceptor().apply {
+            level = if (BuildConfig.DEBUG)
             // Get only Headers for debugging. Logging Body will download whole response (file body)
             // at once and progress won't work.
-            HttpLoggingInterceptor.Level.HEADERS
-        else
-            HttpLoggingInterceptor.Level.NONE
-    }
+                HttpLoggingInterceptor.Level.HEADERS
+            else
+                HttpLoggingInterceptor.Level.NONE
+        }
 
     @Singleton
     @Provides
@@ -81,7 +82,6 @@ object ApiModule {
     @Provides
     @Named(OKHTTP_DOWNLOAD_CLIENT)
     fun providesOkHttpDownloadClient(
-        @ApplicationContext context: Context,
         @Named(HTTP_DOWNLOAD_LOGGING_INTERCEPTOR) httpLoggingInterceptor: HttpLoggingInterceptor
     ): OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(httpLoggingInterceptor)
