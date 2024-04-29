@@ -118,7 +118,7 @@ Distributed under the MIT license. See [LICENSE] for details.
 
 [SketchFab Password & API]: https://sketchfab.com/settings/password
 
-[ARSceneView]:              https://docs.sketchfab.com/data-api/v3/index.html
+[ARSceneView]:              https://github.com/SceneView/sceneview-android
 
 [Android App Architecture]:  https://developer.android.com/topic/architecture
 
