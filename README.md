@@ -64,7 +64,7 @@ To utilize SketchFab's download API, follow these steps to get & set your API ke
 
 ## :crystal_ball: What's next?
 
-We're thrilled to introduce forthcoming features that will elevate your augmented reality experience:
+We're thrilled to introduce forthcoming features that will elevate your Augmented Reality experience:
 
 - Visualize multiple furniture models at once to mix and match pieces for your space.
 - Record and share videos of your AR setups to capture every detail of your design journey.
